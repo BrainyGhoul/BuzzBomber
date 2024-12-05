@@ -15,7 +15,7 @@ const int boxPixelsX = 32;
 const int boxPixelsY = 32;
 const int gameRows = resolutionY / boxPixelsY; // Total rows on grid
 const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
-const int groundHeight = boxPixelsY;
+
 
 // Initializing GameGrid.
 int gameGrid[gameRows][gameColumns] = {};
@@ -34,6 +34,19 @@ void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& 
 
 int main()
 {
+	// levels
+	const int LEVEL1_REGULAR = 20;
+	const int LEVEL2_REGULAR = 15;
+	const int LEVEL3_REGULAR = 20;
+
+	const int LEVEL1_FAST = 0;
+	const int LEVEL2_FAST = 5;
+	const int LEVEL3_FAST = 10;
+
+	const int LEVEL1_HONEYCOMB = 3;
+	const int LEVEL2_HONEYCOMB = 9;
+	const int LEVEL3_HONEYCOMB = 15;
+
 	srand(time(0));
 
 	// Declaring RenderWindow.
@@ -59,7 +72,7 @@ int main()
 	Sprite playerSprite;
 	playerTexture.loadFromFile("Textures/spray.png");
 	playerSprite.setTexture(playerTexture);
-	//	playerSprite.setTextureRect(IntRect(0, 0, boxPixelsX, boxPixelsY));
+	playerSprite.setTextureRect(IntRect(0, 0, boxPixelsX, boxPixelsY));
 
 		// Initializing Bullet and Bullet Sprites
 		// Data for bullet / Spray pellet
@@ -70,7 +83,8 @@ int main()
 
 	Clock bulletClock;
 	Texture bulletTexture;
-	Sprite bulletSprite;
+	Sprite bulletSprite[10];
+
 	bulletTexture.loadFromFile("Textures/bullet.png");
 	bulletSprite.setTexture(bulletTexture);
 	bulletSprite.setScale(3, 3);
@@ -127,6 +141,8 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 	playerSprite.setPosition(player_x, player_y);
 	window.draw(playerSprite);
 }
+
+
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
 	// bullet moves every 20 milliseconds. so if that time hasn't elapsed, the bullet is rendered at the same space
 	if (bulletClock.getElapsedTime().asMilliseconds() < 20)
@@ -137,6 +153,8 @@ void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
 	if (bullet_y < -32)
 		bullet_exists = false;
 }
+
+
 void drawBullet(sf::RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite) {
 	bulletSprite.setPosition(bullet_x, bullet_y);
 	window.draw(bulletSprite);
