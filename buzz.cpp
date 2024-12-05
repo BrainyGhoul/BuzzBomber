@@ -69,13 +69,14 @@ int main()
 
 	// Initializing Player and Player Sprites.
 	float player_x = (gameRows / 2) * boxPixelsX;
-	float player_y = groundY - boxPixelsY;
+	// 2 * boxPixels becuase the can is 64 pixels in height
+	float player_y = groundY - 2 * (boxPixelsY);
 
 	Texture playerTexture;
 	Sprite playerSprite;
 	playerTexture.loadFromFile("Textures/spray.png");
 	playerSprite.setTexture(playerTexture);
-	playerSprite.setTextureRect(IntRect(0, 0, boxPixelsX, boxPixelsY));
+	// playerSprite.setTextureRect(IntRect(0, 0, boxPixelsX, boxPixelsY));
 
 		// Initializing Bullet and Bullet Sprites
 		// Data for bullet / Spray pellet
