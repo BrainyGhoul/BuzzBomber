@@ -195,6 +195,7 @@ int main()
 // setting the position of the bees at the time of the spawn
 void spawnBees(Clock beesClock[], int &beesSpawned, int totalBees, float delay, float offset) {
 	bool toSpawn = false;
+	static Clock timeSinceLastSpawn;
 	// if all the bees have already been spawned
 	if (beesSpawned == totalBees) {
 		return;
@@ -203,13 +204,14 @@ void spawnBees(Clock beesClock[], int &beesSpawned, int totalBees, float delay, 
 			cout << beesClock[beesSpawned].getElapsedTime().asSeconds();
 			toSpawn = true;
 		}
-	} else if (beesClock[beesSpawned - 1].getElapsedTime().asSeconds() >= delay) {
+	} else if (timeSinceLastSpawn.getElapsedTime().asSeconds() >= delay) {
 		toSpawn = true;
 	}
 
 	if (toSpawn) {
 		// starting clock from 0 and incrementing beesSpawned
 		beesClock[beesSpawned].restart();
+		timeSinceLastSpawn.restart();
 		beesSpawned++;
 	}
 
