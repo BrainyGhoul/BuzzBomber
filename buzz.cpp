@@ -25,10 +25,12 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
-void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], int beeMovementValue, float beeSpeed, int regularBeeWidth);
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], int beeMovementValue, float beeSpeed, int regularBeeWidth);
 void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, int beeMovementValue, int beeWidth);
-void spawnBees(Clock beesClock[],int &beesSpawned, int totalBees, float delay, float offset);
+void spawnBees(Clock beesClock[], bool beesAlive[], int &beesSpawned, int totalBees, float delay, float offset);
 void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2]);
+bool isBeeAlive(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &beeHasPolinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
+void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavePolinated[], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
 
 
 int main()
@@ -63,7 +65,7 @@ int main()
 	const float LEVEL3_FAST_OFFSET = 1;
 
 	// speeds. this speed is number of boxPixels per second
-	const float regularSpeed = 5;
+	const float regularSpeed = 50;
 	const float fastSpeed = 5;
 
 	// other settings and variables
@@ -108,6 +110,8 @@ int main()
 
 	float bullet_x = player_x;
 	float bullet_y = player_y;
+	int bulletWidth = 16;
+	int bulletHeight = 16;
 	bool bullet_exists = false;
 
 	Clock bulletClock;
@@ -129,7 +133,7 @@ int main()
 	// bees
 	int regularBeeWidth = 46;
 	int regularBeeHeight = 22;
-	int beesSpawned = 0;
+	int regularBeesSpawned = 0;
 
 	Texture beeTexture;
 	Clock regularBeesClock[LEVEL1_REGULAR];
@@ -137,6 +141,8 @@ int main()
 	// column 0: x coordinate, column 1: y coordinate
 	float regularBeesCoords[LEVEL1_REGULAR][2] = {};
 	bool areRegularMovingRight[LEVEL1_REGULAR] = {};
+	bool regularBeesAlive[LEVEL1_REGULAR] = {};
+	bool regularBeeHasPolinated[LEVEL1_REGULAR] = {};
 
 	beeTexture.loadFromFile("Textures/Regular_bee.png");
 	for (int i = 0; i < LEVEL1_REGULAR; i++) {
@@ -180,20 +186,48 @@ int main()
 			bullet_x = player_x;
 			bullet_y = player_y;
 		}
+		window.draw(groundRectangle);
 
-		spawnBees(regularBeesClock, beesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET);
-		moveBees(regularBees, beesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeeMovementValue, regularSpeed, regularBeeWidth);
-		drawBees(window, beesSpawned, regularBees, regularBeesCoords);
+		spawnBees(regularBeesClock, regularBeesAlive, regularBeesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET);
+		moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeeMovementValue, regularSpeed, regularBeeWidth);
+		drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords);
+		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeeHasPolinated, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, groundY);
+
+
 
 		drawPlayer(window, player_x, player_y, playerSprite);
-		window.draw(groundRectangle);
 		window.display();
 		window.clear();
 	}
 }
 
+// bees die if it touches the ground or a bullet
+void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavePolinated[], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate) {
+	for (int i = 0; i < beesSpawned; i++) {
+		if (beesAlive[i]) {
+			beesAlive[i] = isBeeAlive(bees[i], beesCoords[i][0], beesCoords[i][1], beeHasPolinated[i], beeWidth, beeHeight, bullet_x_coordinate, bullet_y_coordinate, bulletWidth, ground_y_coordinate);
+		}
+	}
+}
+
+bool isBeeAlive(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &beeHasPolinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate) {
+
+	if (bullet_y_coordinate < bee_y_coordinate + beeHeight     // if bullet is above the bottom boundary of bee
+		&& bullet_y_coordinate > bee_y_coordinate) {            // if bullet is below the top boundary of bee
+
+		if (bullet_x_coordinate + bulletWidth > bee_x_coordinate     // if bullet is to the right of left boundary of bee
+			&& bullet_x_coordinate < bee_x_coordinate + beeWidth) {  // if bullet is to the left of right boundary of bee
+			return false;
+		}
+	} else if (bee_y_coordinate + beeHeight > ground_y_coordinate) {
+		beeHasPolinated = true;
+		return false;
+	}
+	return true;
+}
+
 // setting the position of the bees at the time of the spawn
-void spawnBees(Clock beesClock[], int &beesSpawned, int totalBees, float delay, float offset) {
+void spawnBees(Clock beesClock[], bool beesAlive[], int &beesSpawned, int totalBees, float delay, float offset) {
 	bool toSpawn = false;
 	static Clock timeSinceLastSpawn;
 	// if all the bees have already been spawned
@@ -211,6 +245,7 @@ void spawnBees(Clock beesClock[], int &beesSpawned, int totalBees, float delay, 
 	if (toSpawn) {
 		// starting clock from 0 and incrementing beesSpawned
 		beesClock[beesSpawned].restart();
+		beesAlive[beesSpawned] = true;
 		timeSinceLastSpawn.restart();
 		beesSpawned++;
 	}
@@ -224,10 +259,10 @@ void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoord
 	}
 }
 
-void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], int beeMovementValue, float beeSpeed, int beeWidth) {
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], int beeMovementValue, float beeSpeed, int beeWidth) {
 	for (int i = 0; i < noOfBees; i++) {
 		// if its the movement time
-		if (beesClock[i].getElapsedTime().asSeconds() >= 1 / beeSpeed) {
+		if (beesAlive[i] && beesClock[i].getElapsedTime().asSeconds() >= 1 / beeSpeed) {
 			moveBee(bees[i], beesCoords[i][0], beesCoords[i][1], areBeesMovingRight[i], beeMovementValue, beeWidth);
 			beesClock[i].restart();
 		}
