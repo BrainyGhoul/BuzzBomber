@@ -134,7 +134,7 @@ int main()
 	Texture beeTexture;
 	Clock regularBeesClock[LEVEL1_REGULAR];
 	Sprite regularBees[LEVEL1_REGULAR];
-	// column 0: x coordinate, column 1: y coordinage
+	// column 0: x coordinate, column 1: y coordinate
 	float regularBeesCoords[LEVEL1_REGULAR][2] = {};
 	bool areRegularMovingRight[LEVEL1_REGULAR] = {};
 
@@ -182,8 +182,8 @@ int main()
 		}
 
 		spawnBees(regularBeesClock, beesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET);
-		drawBees(window, beesSpawned, regularBees, regularBeesCoords);
 		moveBees(regularBees, beesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeeMovementValue, regularSpeed, regularBeeWidth);
+		drawBees(window, beesSpawned, regularBees, regularBeesCoords);
 
 		drawPlayer(window, player_x, player_y, playerSprite);
 		window.draw(groundRectangle);
