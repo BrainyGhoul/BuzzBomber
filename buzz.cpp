@@ -24,12 +24,7 @@ int gameGrid[gameRows][gameColumns] = {};
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite);
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
-
-/////////////////////////////////////////////////////////////////////////////
-//                                                                         //
-// Write your functions declarations here. Some have been written for you. //
-//                                                                         //
-/////////////////////////////////////////////////////////////////////////////
+int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
 
 
 int main()
@@ -47,8 +42,9 @@ int main()
 	const int LEVEL2_HONEYCOMB = 9;
 	const int LEVEL3_HONEYCOMB = 15;
 
-
+	// other settings and variables
 	int groundY = (gameRows - 2) * boxPixelsY;
+	int playerMovementValue = boxPixelsX;
 
 	srand(time(0));
 
@@ -72,6 +68,10 @@ int main()
 	// 2 * boxPixels becuase the can is 64 pixels in height
 	float player_y = groundY - 2 * (boxPixelsY);
 
+
+	int playerWidth = 2 * boxPixelsX;
+	int playerHeight = 2 * boxPixelsY;
+	
 	Texture playerTexture;
 	Sprite playerSprite;
 	playerTexture.loadFromFile("Textures/spray.png");
@@ -107,6 +107,14 @@ int main()
 			if (e.type == Event::Closed) {
 				return 0;
 			}
+			else if (e.type == Event::KeyPressed) {
+				if (e.key.code == sf::Keyboard::Right) {
+					player_x = movePlayer(player_x, playerWidth, playerMovementValue, true);
+
+				} else if (e.key.code == sf::Keyboard::Left) {
+					player_x = movePlayer(player_x, playerWidth, playerMovementValue, false);
+				}
+			}
 		}
 
 
@@ -130,11 +138,22 @@ int main()
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////
-//                                                                        //
-// Write your functions definitions here. Some have been written for you. //
-//                                                                        //
-////////////////////////////////////////////////////////////////////////////
+
+int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight) {
+	if (isRight) {
+		// adding playerWidth so that we get the right border of the sprite
+		if (player_x + playerWidth + playerMovementValue > resolutionX) {
+			return resolutionX - playerWidth;
+		}
+		return player_x + playerMovementValue;
+	} else {
+		// 
+		if (player_x - playerMovementValue < 0) {
+			return 0;
+		}
+		return player_x - playerMovementValue;
+	}
+}
 
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite) {
 	playerSprite.setPosition(player_x, player_y);
