@@ -226,6 +226,19 @@ void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCo
 		if (!beesAlive[i] && !hasPollinated[i]) {
 			honeycombCoords[i][0] = startingIndexDifference(beesCoords[i][0], beeWidth, honeycombWidth);
 			honeycombCoords[i][1] = startingIndexDifference(beesCoords[i][1], beeHeight, honeycombHeight);
+
+			// taking care of edge cases
+			if (honeycombCoords[i][0] < 0) {
+				honeycombCoords[i][0] = 0;
+			} else if (honeycombCoords[i][0] + honeycombWidth > resolutionX) {
+				honeycombCoords[i][0] = resolutionX - honeycombWidth;
+			}
+
+			if (honeycombCoords[i][1] < 0) {
+				honeycombCoords[i][1] = 0;
+			}
+
+			// displaying honeycombs
 			honeycombs[i].setPosition(honeycombCoords[i][0], honeycombCoords[i][1]);
 			window.draw(honeycombs[i]);
 		}
