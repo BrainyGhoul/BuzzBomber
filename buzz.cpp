@@ -83,7 +83,7 @@ int main()
 
 	Clock bulletClock;
 	Texture bulletTexture;
-	Sprite bulletSprite[10];
+	Sprite bulletSprite;
 
 	bulletTexture.loadFromFile("Textures/bullet.png");
 	bulletSprite.setTexture(bulletTexture);
