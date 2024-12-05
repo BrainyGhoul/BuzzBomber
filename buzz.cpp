@@ -15,6 +15,7 @@ const int boxPixelsX = 32;
 const int boxPixelsY = 32;
 const int gameRows = resolutionY / boxPixelsY; // Total rows on grid
 const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
+const int groundHeight = boxPixelsY;
 
 // Initializing GameGrid.
 int gameGrid[gameRows][gameColumns] = {};
@@ -77,8 +78,8 @@ int main()
 
 	// The ground on which player moves
 
-	RectangleShape groundRectangle(Vector2f(960, 64));
-	groundRectangle.setPosition(0, (gameColumns - 2) * boxPixelsY);
+	RectangleShape groundRectangle(Vector2f(resolutionX, boxPixelsY * 2));
+	groundRectangle.setPosition(0, (gameRows - 1) * boxPixelsY);
 	groundRectangle.setFillColor(Color::Green);
 
 	while (window.isOpen()) {
@@ -127,6 +128,7 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 	window.draw(playerSprite);
 }
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
+	// bullet moves every 20 milliseconds. so if that time hasn't elapsed, the bullet is rendered at the same space
 	if (bulletClock.getElapsedTime().asMilliseconds() < 20)
 		return;
 
