@@ -93,7 +93,7 @@ int main()
 	// The ground on which player moves
 
 	RectangleShape groundRectangle(Vector2f(resolutionX, boxPixelsY * 2));
-	groundRectangle.setPosition(0, (gameRows - 1) * boxPixelsY);
+	groundRectangle.setPosition(0, (gameRows - 2) * boxPixelsY);
 	groundRectangle.setFillColor(Color::Green);
 
 	while (window.isOpen()) {
