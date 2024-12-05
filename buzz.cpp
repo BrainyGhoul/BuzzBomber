@@ -42,6 +42,24 @@ int main()
 	const int LEVEL2_HONEYCOMB = 9;
 	const int LEVEL3_HONEYCOMB = 15;
 
+	const int LEVEL1_REGULAR_DELAY = 1;
+	const int LEVEL2_REGULAR_DELAY = 1;
+	const int LEVEL3_REGULAR_DELAY = 1;
+
+	const int LEVEL1_FAST_DELAY = 1;
+	const int LEVEL2_FAST_DELAY = 1;
+	const int LEVEL3_FAST_DELAY = 1;
+
+	const int LEVEL1_REGULAR_OFFSET = 1;
+	const int LEVEL2_REGULAR_OFFSET = 1;
+	const int LEVEL3_REGULAR_OFFSET = 1;
+
+	const int LEVEL1_FAST_OFFSET = 1;
+	const int LEVEL2_FAST_OFFSET = 1;
+	const int LEVEL3_FAST_OFFSET = 1;
+
+
+
 	// other settings and variables
 	int groundY = (gameRows - 2) * boxPixelsY;
 	int playerMovementValue = boxPixelsX;
