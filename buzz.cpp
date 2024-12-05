@@ -83,7 +83,7 @@ int main()
 
 	float bullet_x = player_x;
 	float bullet_y = player_y;
-	bool bullet_exists = true;
+	bool bullet_exists = false;
 
 	Clock bulletClock;
 	Texture bulletTexture;
@@ -108,11 +108,16 @@ int main()
 				return 0;
 			}
 			else if (e.type == Event::KeyPressed) {
+				// movement of the spray can
 				if (e.key.code == sf::Keyboard::Right) {
 					player_x = movePlayer(player_x, playerWidth, playerMovementValue, true);
 
 				} else if (e.key.code == sf::Keyboard::Left) {
 					player_x = movePlayer(player_x, playerWidth, playerMovementValue, false);
+
+				// shoot spray
+				} else if (e.key.code == sf::Keyboard::Space) {
+					bullet_exists = true;
 				}
 			}
 		}
@@ -160,7 +165,7 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 	window.draw(playerSprite);
 }
 
-
+// TODO check pollination
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
 	// bullet moves every 20 milliseconds. so if that time hasn't elapsed, the bullet is rendered at the same space
 	if (bulletClock.getElapsedTime().asMilliseconds() < 20)
