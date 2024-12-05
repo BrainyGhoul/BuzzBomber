@@ -25,6 +25,10 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], int beeMovementValue, float beeSpeed, int regularBeeWidth);
+void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, int beeMovementValue, int beeWidth);
+void spawnBees(Clock beesClock[],int &beesSpawned, int totalBees, float delay, float offset);
+void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2]);
 
 
 int main()
@@ -65,6 +69,7 @@ int main()
 	// other settings and variables
 	int groundY = (gameRows - 2) * boxPixelsY;
 	int playerMovementValue = boxPixelsX;
+	int regularBeeMovementValue = playerMovementValue;
 
 	srand(time(0));
 
@@ -120,6 +125,26 @@ int main()
 	groundRectangle.setPosition(0, groundY);
 	groundRectangle.setFillColor(Color::Green);
 
+
+	// bees
+	int regularBeeWidth = 46;
+	int regularBeeHeight = 22;
+	int beesSpawned = 0;
+
+	Texture beeTexture;
+	Clock regularBeesClock[LEVEL1_REGULAR];
+	Sprite regularBees[LEVEL1_REGULAR];
+	// column 0: x coordinate, column 1: y coordinage
+	float regularBeesCoords[LEVEL1_REGULAR][2] = {};
+	bool areRegularMovingRight[LEVEL1_REGULAR] = {};
+
+	beeTexture.loadFromFile("Textures/Regular_bee.png");
+	for (int i = 0; i < LEVEL1_REGULAR; i++) {
+		regularBees[i].setTexture(beeTexture);
+		regularBees[i].setTextureRect(sf::IntRect(0, 0, boxPixelsX, boxPixelsY));
+	}
+	// TODO spawn bee at either right or left
+
 	while (window.isOpen()) {
 
 		Event e;
@@ -156,6 +181,10 @@ int main()
 			bullet_y = player_y;
 		}
 
+		spawnBees(regularBeesClock, beesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET);
+		drawBees(window, beesSpawned, regularBees, regularBeesCoords);
+		moveBees(regularBees, beesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeeMovementValue, regularSpeed, regularBeeWidth);
+
 		drawPlayer(window, player_x, player_y, playerSprite);
 		window.draw(groundRectangle);
 		window.display();
@@ -163,6 +192,80 @@ int main()
 	}
 }
 
+// setting the position of the bees at the time of the spawn
+void spawnBees(Clock beesClock[], int &beesSpawned, int totalBees, float delay, float offset) {
+	bool toSpawn = false;
+	// if all the bees have already been spawned
+	if (beesSpawned == totalBees) {
+		return;
+	} else if (beesSpawned == 0) {
+		if (beesClock[beesSpawned].getElapsedTime().asSeconds() >= offset) {
+			cout << beesClock[beesSpawned].getElapsedTime().asSeconds();
+			toSpawn = true;
+		}
+	} else if (beesClock[beesSpawned - 1].getElapsedTime().asSeconds() >= delay) {
+		toSpawn = true;
+	}
+
+	if (toSpawn) {
+		// starting clock from 0 and incrementing beesSpawned
+		beesClock[beesSpawned].restart();
+		beesSpawned++;
+	}
+
+}
+
+void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2]) {
+	for (int i = 0; i < noOfBees; i++) {
+		bees[i].setPosition(beesCoords[i][0], beesCoords[i][1]);
+		window.draw(bees[i]);
+	}
+}
+
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], int beeMovementValue, float beeSpeed, int beeWidth) {
+	for (int i = 0; i < noOfBees; i++) {
+		// if its the movement time
+		if (beesClock[i].getElapsedTime().asSeconds() >= 1 / beeSpeed) {
+			moveBee(bees[i], beesCoords[i][0], beesCoords[i][1], areBeesMovingRight[i], beeMovementValue, beeWidth);
+			beesClock[i].restart();
+		}
+
+	}
+}
+
+// TODO check pollination
+// TODO IF THE BEE IS AT THE GROUND
+void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, int beeMovementValue, int beeWidth) {
+	bool directionChanged = false;
+
+	//  if at the left or right boundaries, setting the x coordinates at the boundaries too
+	if ((isMovingRight && x_coordinate + beeWidth + beeMovementValue >= resolutionX)) {
+		directionChanged = true;
+		x_coordinate = resolutionX - beeWidth;
+
+	} else if ((!isMovingRight && x_coordinate - beeMovementValue <= 0)) {
+		directionChanged = true;
+		x_coordinate = 0;
+	}
+
+
+	if (directionChanged) {
+		isMovingRight = !isMovingRight;
+
+		// if not at the first block
+		if (x_coordinate || y_coordinate){
+			y_coordinate += boxPixelsY;
+		}
+
+	} else {
+		if (isMovingRight) {
+			x_coordinate += beeMovementValue;
+		} else {
+			x_coordinate -= beeMovementValue;
+		}
+	}
+
+}
 
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight) {
 	if (isRight) {
@@ -185,7 +288,6 @@ void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& 
 	window.draw(playerSprite);
 }
 
-// TODO check pollination
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
 	// bullet moves every 20 milliseconds. so if that time hasn't elapsed, the bullet is rendered at the same space
 	if (bulletClock.getElapsedTime().asMilliseconds() < 20)
