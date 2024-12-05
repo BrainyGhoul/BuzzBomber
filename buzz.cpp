@@ -47,6 +47,9 @@ int main()
 	const int LEVEL2_HONEYCOMB = 9;
 	const int LEVEL3_HONEYCOMB = 15;
 
+
+	int groundY = (gameRows - 2) * boxPixelsY;
+
 	srand(time(0));
 
 	// Declaring RenderWindow.
@@ -66,7 +69,7 @@ int main()
 
 	// Initializing Player and Player Sprites.
 	float player_x = (gameRows / 2) * boxPixelsX;
-	float player_y = (gameColumns - 4) * boxPixelsY;
+	float player_y = groundY - boxPixelsY;
 
 	Texture playerTexture;
 	Sprite playerSprite;
@@ -93,7 +96,7 @@ int main()
 	// The ground on which player moves
 
 	RectangleShape groundRectangle(Vector2f(resolutionX, boxPixelsY * 2));
-	groundRectangle.setPosition(0, (gameRows - 2) * boxPixelsY);
+	groundRectangle.setPosition(0, groundY);
 	groundRectangle.setFillColor(Color::Green);
 
 	while (window.isOpen()) {
@@ -105,12 +108,7 @@ int main()
 			}
 		}
 
-		///////////////////////////////////////////////////////////////
-		//                                                           //
-		// Call Your Functions Here. Some have been written for you. //
-		// Be vary of the order you call them, SFML draws in order.  //
-		//                                                           //
-		///////////////////////////////////////////////////////////////
+
 
 
 		if (bullet_exists == true)
