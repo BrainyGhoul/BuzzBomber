@@ -21,14 +21,16 @@ const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
 // Initializing GameGrid.
 int gameGrid[gameRows][gameColumns] = {};
 
+float moveBeeX(float x_coordinate, bool isMovingRight, int beeMovementValue);
+bool areColliding(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height);
 float startingIndexDifference(float startingOld, int jumpOld, int jumpNew);
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite);
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
-void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], int beeMovementValue, float beeSpeed, int regularBeeWidth);
-void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, int beeMovementValue, int beeWidth);
-void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], int &beesSpawned, int totalBees, float delay, float offset);
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], bool hasPollinated[], float honeycombCoords[][2], int beeMovementValue, float beeSpeed, int beeHeight, int beeWidth, bool areRegular, int honeycombHeight, int honeycombWidth);
+void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight,float honeycombCoords[][2], bool hasPollinated, int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth);
+void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], bool areBeesMovingRight[], int &beesSpawned, int totalBees, float delay, float offset, int beeWidth);
 void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2], bool beesAlive[]);
 bool isBeeAlive(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &beeHasPolinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
 void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavePolinated[], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
@@ -207,8 +209,8 @@ int main()
 		}
 		window.draw(groundRectangle);
 
-		spawnBees(regularBeesCoords, regularBeesClock, regularBeesAlive, regularBeesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET);
-		moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeeMovementValue, regularSpeed, regularBeeWidth);
+		spawnBees(regularBeesCoords, regularBeesClock, regularBeesAlive, areRegularMovingRight, regularBeesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET, regularBeeWidth);
+		moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeeHasPolinated, regularHoneycombCoords, regularBeeMovementValue, regularSpeed, regularBeeHeight, regularBeeWidth, true, honeycombHeight, honeycombWidth);
 		drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords, regularBeesAlive);
 		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeeHasPolinated, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, groundY);
 
@@ -274,7 +276,7 @@ bool isBeeAlive(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool
 }
 
 // sets bee to alive and returns the initial x coordinate
-void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], int &beesSpawned, int totalBees, float delay, float offset) {
+void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], bool areBeesMovingRight[], int &beesSpawned, int totalBees, float delay, float offset, int beeWidth) {
 	bool toSpawn = false;
 	static Clock timeSinceLastSpawn;
 	// if all the bees have already been spawned
@@ -282,7 +284,6 @@ void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], int &
 		return;
 	} else if (beesSpawned == 0) {
 		if (beesClock[beesSpawned].getElapsedTime().asSeconds() >= offset) {
-			cout << beesClock[beesSpawned].getElapsedTime().asSeconds();
 			toSpawn = true;
 		}
 	} else if (timeSinceLastSpawn.getElapsedTime().asSeconds() >= delay) {
@@ -293,9 +294,12 @@ void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], int &
 		// starting clock from 0 and incrementing beesSpawned
 		beesClock[beesSpawned].restart();
 		beesAlive[beesSpawned] = true;
-		beesCoords[beesSpawned][0] = rand() % 2 ? 0: resolutionX; // based on a random number generated, the initial coordinate is set
+		beesCoords[beesSpawned][0] = rand() % 2 ? 0: resolutionX - beeWidth; // based on a random number generated, the initial coordinate is set
 		timeSinceLastSpawn.restart();
 		beesSpawned++;
+		if (!beesCoords[beesSpawned][0]) {
+			areBeesMovingRight[beesSpawned] = true;
+		}
 	}
 
 }
@@ -308,12 +312,11 @@ void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoord
 		}
 	}
 }
-
-void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], int beeMovementValue, float beeSpeed, int beeWidth) {
+void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], bool hasPollinated[], float honeycombCoords[][2], int beeMovementValue, float beeSpeed, int beeHeight, int beeWidth, bool areRegular, int honeycombHeight, int honeycombWidth) {
 	for (int i = 0; i < noOfBees; i++) {
 		// if its the movement time
 		if (beesAlive[i] && beesClock[i].getElapsedTime().asSeconds() >= 1 / beeSpeed) {
-			moveBee(bees[i], beesCoords[i][0], beesCoords[i][1], areBeesMovingRight[i], beeMovementValue, beeWidth);
+			moveBee(bees[i], beesCoords[i][0], beesCoords[i][1], areBeesMovingRight[i], honeycombCoords, hasPollinated[i], beeMovementValue, beeHeight, beeWidth, areRegular, noOfBees, honeycombHeight, honeycombWidth);
 			beesClock[i].restart();
 		}
 
@@ -321,37 +324,62 @@ void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMo
 }
 
 // TODO check pollination
-void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, int beeMovementValue, int beeWidth) {
+void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight,float honeycombCoords[][2], bool hasPollinated, int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth) {
 	bool directionChanged = false;
 
+	float x_coordinateAfterMovement = moveBeeX(x_coordinate, isMovingRight, beeMovementValue);
+
+	// looking for any collision with honeycombs
+	for (int i = 0; i < noOfBees; i++) {
+		if (hasPollinated){
+			bool isBeeCollidingWithHoneycomb = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight);
+			if (isBeeCollidingWithHoneycomb) {
+				isMovingRight = !isMovingRight;
+				directionChanged = true;
+			}
+		}
+	}
+
+	x_coordinateAfterMovement = moveBeeX(x_coordinate, isMovingRight, beeMovementValue);
+
 	//  if at the left or right boundaries, setting the x coordinates at the boundaries too
-	if ((isMovingRight && x_coordinate + beeWidth + beeMovementValue >= resolutionX)) {
+	bool isBeeCollidingWithLeftWall = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, -10, 0, 9, resolutionY);
+	bool isBeeCollidingWithRightWall = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, resolutionX + 1, 0, 1000, resolutionY);
+	if (isBeeCollidingWithRightWall) {
 		directionChanged = true;
+		isMovingRight = !isMovingRight;
 		x_coordinate = resolutionX - beeWidth;
 
-	} else if ((!isMovingRight && x_coordinate - beeMovementValue <= 0)) {
-		directionChanged = true;
+	} else if (isBeeCollidingWithLeftWall) {
+		isMovingRight = !isMovingRight;
 		x_coordinate = 0;
+
+		// if position other than 0, 0
+		if (!(!x_coordinate && !y_coordinate)) {
+			directionChanged = true;
+		}
 	}
 
 
-	if (directionChanged) {
-		isMovingRight = !isMovingRight;
+	x_coordinateAfterMovement = moveBeeX(x_coordinate, isMovingRight, beeMovementValue);
 
-		// if not at the first block
-		if (x_coordinate || y_coordinate){
-			y_coordinate += boxPixelsY;
-		}
+	if (directionChanged) {
+		y_coordinate += boxPixelsY;
 
 	} else {
-		if (isMovingRight) {
-			x_coordinate += beeMovementValue;
-		} else {
-			x_coordinate -= beeMovementValue;
-		}
+		x_coordinate = x_coordinateAfterMovement;
 	}
 
 }
+
+float moveBeeX(float x_coordinate, bool isMovingRight, int beeMovementValue) {
+	if (isMovingRight) {
+		return x_coordinate + beeMovementValue;
+	} else {
+		return x_coordinate - beeMovementValue;
+	}
+}
+
 
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight) {
 	if (isRight) {
@@ -400,4 +428,15 @@ float startingIndexDifference(float startingOld, int jumpOld, int jumpNew) {
 		return startingOld - ((jumpNew - jumpOld) / 2.0f);
 	}
 	return startingOld + ((jumpOld - jumpNew) / 2.0f);
+}
+
+// this function checks if any of the pixels of the objects are overlapping. if they are,
+// it returns true, otherwise returns false
+bool areColliding(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height) {
+    if (sprite1_x + sprite1Width > sprite2_x && sprite2_x + sprite2Width > sprite1_x) {
+        if (sprite1_y + sprite1Height > sprite2_y && sprite2_y + sprite2Height > sprite1_y) {
+            return true;
+        }
+    }
+    return false;
 }
