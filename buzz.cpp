@@ -347,7 +347,7 @@ bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool be
 		// dies if it pollinates
 		(beeHasPollinated ||
 		// of if it goes into the ground
-		bee_y_coordinate + beeHeight > groundY) {
+		bee_y_coordinate + beeHeight > ground_y_coordinate) {
 		
 		return false;
 	
