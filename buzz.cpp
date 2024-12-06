@@ -32,7 +32,7 @@ void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMo
 void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight,float honeycombCoords[][2], bool havePollinated[], bool areBeesAlive[], int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth, int beeRowHeight);
 void spawnBees(float beesCoords[][2], Clock beesClock[], bool beesAlive[], bool areBeesMovingRight[], int &beesSpawned, int totalBees, float delay, float offset, int beeWidth);
 void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2], bool beesAlive[]);
-bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &beeHaspollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
+bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHaspollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
 void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavepollinated[], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate);
 void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCoords[][2], bool beesAlive[], bool hasPollinated[], float beesCoords[][2], bool areDestroyed[], int noOfBees, int beeHeight, int beeWidth, int honeycombHeight, int honeycombWidth);
 void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], int noOfBees, int beeHeight, int beeWidth, int flowerStartIndex[], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, int groundY, int beeRowHeight);
@@ -188,7 +188,6 @@ int main()
 	for (int i = 0; i < totalFlowers; i++) {
 		// adding i because the next flower starts with the next index
 		flowerStartIndex[i] = (i * flowerWidth) + i;
-		cout << i << "\t" << flowerStartIndex[i] << endl;
 	}
 
 
@@ -334,7 +333,7 @@ void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesH
 }
 
 // returns either true or false. Also sets the beeHasPollinated attribute
-bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &beeHasPollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate) {
+bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHasPollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int ground_y_coordinate) {
 
 	if (bullet_y_coordinate < bee_y_coordinate + beeHeight     // if bullet is above the bottom boundary of bee
 		&& bullet_y_coordinate > bee_y_coordinate) {            // if bullet is below the top boundary of bee
@@ -343,6 +342,8 @@ bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool &b
 			&& bullet_x_coordinate < bee_x_coordinate + beeWidth) {  // if bullet is to the left of right boundary of bee
 			return false;
 		}
+	} else if (beeHasPollinated) {
+		return false;
 	}
 	return true;
 }
