@@ -342,8 +342,15 @@ bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool be
 			&& bullet_x_coordinate < bee_x_coordinate + beeWidth) {  // if bullet is to the left of right boundary of bee
 			return false;
 		}
-	} else if (beeHasPollinated) {
+
+	} else if 
+		// dies if it pollinates
+		(beeHasPollinated ||
+		// of if it goes into the ground
+		bee_y_coordinate + beeHeight > groundY) {
+		
 		return false;
+	
 	}
 	return true;
 }
