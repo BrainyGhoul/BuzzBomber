@@ -43,7 +43,7 @@ void drawFlowers(RenderWindow& window, Sprite flowers[], int startIndex[], bool 
 int main()
 {
 	// levels
-	const int LEVEL1_REGULAR = 20;
+	const int LEVEL1_REGULAR = 200;
 	const int LEVEL2_REGULAR = 15;
 	const int LEVEL3_REGULAR = 20;
 
@@ -72,7 +72,7 @@ int main()
 	const float LEVEL3_FAST_OFFSET = 1;
 
 	// speeds. this speed is number of boxPixels per second
-	const float regularSpeed = 1.5;
+	const float regularSpeed = 20;
 	const float fastSpeed = 5;
 
 	// other settings and variables
@@ -396,7 +396,7 @@ void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMo
 	}
 }
 
-// TODO check pollination
+
 void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight,float honeycombCoords[][2], bool havePollinated[], bool areBeesAlive[], int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth, int beeRowHeight) {
 	bool directionChanged = false;
 
@@ -425,13 +425,9 @@ void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovi
 		x_coordinate = resolutionX - beeWidth;
 
 	} else if (isBeeCollidingWithLeftWall) {
+		directionChanged = true;
 		isMovingRight = !isMovingRight;
 		x_coordinate = 0;
-
-		// if position other than 0, 0
-		if (!(!x_coordinate && !y_coordinate)) {
-			directionChanged = true;
-		}
 	}
 
 
