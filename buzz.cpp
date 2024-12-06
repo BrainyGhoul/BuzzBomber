@@ -263,7 +263,7 @@ void drawFlowers(RenderWindow& window, Sprite flowers[], int startIndex[], bool 
 void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], int noOfBees, int beeHeight, int beeWidth, int flowerStartIndex[], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, int groundY, int beeRowHeight) {
 	for (int i = 0; i < noOfBees; i++) {
 		// if in the air, no pollination anyway
-		if (beesCoords[i][1] + beeHeight < groundY - beeRowHeight !! !beesAlive[i]) {
+		if (beesCoords[i][1] + beeHeight < groundY - beeRowHeight || !beesAlive[i]) {
 			continue;
 		}
 
