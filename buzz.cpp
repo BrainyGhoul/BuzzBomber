@@ -28,7 +28,7 @@ bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float
 float moveBeeX(float x_coordinate, bool isMovingRight, int beeMovementValue);
 bool areColliding(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height);
 float startingIndexDifference(float startingOld, int jumpOld, int jumpNew);
-void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite);
+void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite, float backgroundX, float backgroundY, int backgroundOffsetX, int backgroundOffsetY, int backgroundWidth, int backgroundHeight,  Sprite& backgroundSprite);
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
 int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
@@ -45,6 +45,8 @@ void destroyHoneycombs(bool honeycombDestroyed[], float honeycombCoords[][2], bo
 void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime);
 void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBirdX, float hummingBirdY);
 void moveHummingBirdToPoint(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, float destinationX, float destinationY, int hummingBirdWidth, int hummingBirdHeight, float stepValue);
+void drawRemainingBottles(RenderWindow &window, float startingX, float startingY, Texture bottleTexture, int remainingBottles, int bottleWidth, int bottleHeight);
+
 
 int main()
 {
@@ -328,9 +330,22 @@ int main()
 		drawHoneycombs(window, regularHoneycombSprites, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRegularHoneycombsDestroyed, regularBeesSpawned, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
 		drawHummingBird(window, hummingBirdSprite, hummingBirdX, hummingBirdY);
 		drawPlayer(window, player_x, player_y, playerSprite, playerBackgroundX, playerBackgroundY, playerBackgroundOffsetX, playerBackgroundOffsetY, playerBackgroundWidth, playerBackgroundHeight, playerBackground);
+		drawRemainingBottles(window, 0, groundY, playerTexture, spraysCansLeft, playerWidth, playerHeight);
 
 		window.display();
 		window.clear();
+	}
+}
+
+
+void drawRemainingBottles(RenderWindow &window, float startingX, float startingY, Texture bottleTexture, int remainingBottles, int bottleWidth, int bottleHeight) {
+	for (int i = 0; i < remainingBottles; i++) {
+		Sprite bottle;
+		bottle.setTexture(bottleTexture);
+		// bottle.setTextureRect(sf::IntRect(0, 0, bottleWidth, bottleHeight));
+		bottle.setPosition(startingX, startingY);
+		window.draw(bottle);
+		startingX += bottleWidth;
 	}
 }
 
