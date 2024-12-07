@@ -36,13 +36,13 @@ void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMo
 void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight,float honeycombCoords[][2], bool havePollinated[], bool honeycombCreated[], bool honeycombDestroyed[], int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth, float playerX, float playerY, int playerWidth, int playerHeight, int beeRowHeight, int groundY);
 void spawnBees(Sprite bees[], float beesCoords[][2], Clock beesClock[], bool beesAlive[], bool areBeesMovingRight[], int &beesSpawned, int totalBees, float delay, float offset, int beeWidth, int beeHeight);
 void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoords[][2], bool beesAlive[]);
-bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHaspollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, int ground_y_coordinate, bool &bulletCollided);
-void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavepollinated[], bool isHoneycombCreated[], bool isHoneycombDestroyed[], float honeycombCoords[][2], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float &bullet_y_coordinate, int bulletWidth, int bulletHeight, int honeycombWidth, int honeycombHeight, int ground_y_coordinate);
+bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHaspollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, int ground_y_coordinate, bool bulletExists, bool &bulletCollided);
+void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavepollinated[], bool isHoneycombCreated[], bool isHoneycombDestroyed[], float honeycombCoords[][2], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float &bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists, int honeycombWidth, int honeycombHeight, int ground_y_coordinate);
 void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCoords[][2], bool isHoneycombCreated[], bool hasPollinated[], float beesCoords[][2], bool honeycombDestroyed[], int noOfBees, int beeHeight, int beeWidth, int honeycombHeight, int honeycombWidth);
 void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], int noOfBees, int beeHeight, int beeWidth, int flowerStartIndex[], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, int groundY, int beeRowHeight);
 void drawFlowers(RenderWindow& window, Sprite flowers[], int startIndex[], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight);
-void destroyHoneycombs(bool honeycombDestroyed[], float honeycombCoords[][2], bool honeycombCreated[], bool hasPollinated[], int noOfHoneycombs, int honeycombWidth, int honeycombHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight);
-void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime);
+void destroyHoneycombs(bool honeycombDestroyed[], float honeycombCoords[][2], bool honeycombCreated[], bool hasPollinated[], int noOfHoneycombs, int honeycombWidth, int honeycombHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists);
+void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime);
 void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBirdX, float hummingBirdY);
 void moveHummingBirdToPoint(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, float destinationX, float destinationY, int hummingBirdWidth, int hummingBirdHeight, float stepValue);
 
@@ -268,11 +268,11 @@ int main()
 			bullet_y = player_y;
 		}
 		window.draw(groundRectangle);
-		manageHummingBird(hummingBirdSprite, hummingBirdX, hummingBirdY, hummingBirdWidth, hummingBirdHeight, hummingBirdStepValue, isHummingBirdSick, regularHoneycombCoords, isRegularHoneycombCreated, honeycombWidth, honeycombHeight, regularBeesSpawned, regularBeesAlive, regularBeesHavePollinated, areRegularHoneycombsDestroyed, regularHoneycombsSucked, bullet_x, bullet_y, bulletWidth, bulletHeight, hummingBirdHealingTime, hummingBirdSpeed, hummingBirdRestX, hummingBirdRestY, nectarSuckTime);
+		manageHummingBird(hummingBirdSprite, hummingBirdX, hummingBirdY, hummingBirdWidth, hummingBirdHeight, hummingBirdStepValue, isHummingBirdSick, regularHoneycombCoords, isRegularHoneycombCreated, honeycombWidth, honeycombHeight, regularBeesSpawned, regularBeesAlive, regularBeesHavePollinated, areRegularHoneycombsDestroyed, regularHoneycombsSucked, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, hummingBirdHealingTime, hummingBirdSpeed, hummingBirdRestX, hummingBirdRestY, nectarSuckTime);
 		spawnBees(regularBees, regularBeesCoords, regularBeesClock, regularBeesAlive, areRegularMovingRight, regularBeesSpawned, LEVEL1_REGULAR, LEVEL1_REGULAR_DELAY, LEVEL1_REGULAR_OFFSET, regularBeeWidth, regularBeeHeight);
 		moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeesHavePollinated, isRegularHoneycombCreated, regularHoneycombCoords, areRegularHoneycombsDestroyed, regularBeeMovementValue, regularSpeed, regularBeeHeight, regularBeeWidth, true, honeycombHeight, honeycombWidth, player_x, player_y, playerWidth, playerHeight, beeRowHeight, groundY);
-		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeesHavePollinated, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, regularHoneycombCoords, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, honeycombWidth, honeycombHeight, groundY);
-		destroyHoneycombs(areRegularHoneycombsDestroyed, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesSpawned, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight);
+		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeesHavePollinated, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, regularHoneycombCoords, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
+		destroyHoneycombs(areRegularHoneycombsDestroyed, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesSpawned, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
 		beePollinatesGround(regularBees, regularBeesAlive, regularBeesHavePollinated, regularBeesCoords, regularBeesSpawned, regularBeeHeight, regularBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, groundY, beeRowHeight);
 		drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords, regularBeesAlive);
 
@@ -291,7 +291,7 @@ void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBird
 	window.draw(hummingBird);
 }
 
-void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime) {
+void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime) {
 
 	static int hitByBullet = 0;
 	static Clock hummingBirdSickTimer;
@@ -323,7 +323,7 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 
 
 	bool isCollidingWithBullet = areColliding(hummingBirdX, hummingBirdY, hummingBirdWidth, hummingBirdHeight, bulletX, bulletY, bulletWidth, bulletHeight);
-	if (isCollidingWithBullet) {
+	if (isCollidingWithBullet && bulletExists) {
 		hitByBullet++;
 		bulletY -= bulletHeight + hummingBirdHeight;
 
@@ -404,11 +404,11 @@ void moveHummingBirdToPoint(Sprite &hummingBird, float &hummingBirdX, float &hum
 
 
 // if bulleted touches the honeycombs, they're destroyed
-void destroyHoneycombs(bool honeycombDestroyed[], float honeycombCoords[][2], bool honeycombCreated[], bool hasPollinated[], int noOfHoneycombs, int honeycombWidth, int honeycombHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight) {
+void destroyHoneycombs(bool honeycombDestroyed[], float honeycombCoords[][2], bool honeycombCreated[], bool hasPollinated[], int noOfHoneycombs, int honeycombWidth, int honeycombHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists) {
 	for (int i = 0; i < noOfHoneycombs; i++) {
 		if (!honeycombDestroyed[i] && honeycombCreated[i]) {
 			bool isHoneycombNBulletColliding = areColliding(honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight, bullet_x_coordinate, bullet_y_coordinate, bulletWidth, bulletHeight);
-			if (isHoneycombNBulletColliding) {
+			if (isHoneycombNBulletColliding && bulletExists) {
 				honeycombDestroyed[i] = true;
 			}
 		}
@@ -486,11 +486,11 @@ void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCo
 
 
 // bees die if they touch the ground or a bullet
-void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavePollinated[], bool isHoneycombCreated[], bool isHoneycombDestroyed[], float honeycombCoords[][2], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float &bullet_y_coordinate, int bulletWidth, int bulletHeight, int honeycombWidth, int honeycombHeight, int ground_y_coordinate) {
+void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavePollinated[], bool isHoneycombCreated[], bool isHoneycombDestroyed[], float honeycombCoords[][2], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float &bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists, int honeycombWidth, int honeycombHeight, int ground_y_coordinate) {
 	for (int i = 0; i < beesSpawned; i++) {
 		if (beesAlive[i]) {
 			bool bulletCollided = false;
-			beesAlive[i] = killBee(bees[i], beesCoords[i][0], beesCoords[i][1], beesHavePollinated[i], beeWidth, beeHeight, bullet_x_coordinate, bullet_y_coordinate, bulletWidth, bulletHeight, ground_y_coordinate, bulletCollided);
+			beesAlive[i] = killBee(bees[i], beesCoords[i][0], beesCoords[i][1], beesHavePollinated[i], beeWidth, beeHeight, bullet_x_coordinate, bullet_y_coordinate, bulletWidth, bulletHeight, ground_y_coordinate, bulletExists, bulletCollided);
 			isHoneycombCreated[i] = bulletCollided;
 
 
@@ -519,9 +519,9 @@ void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesH
 }
 
 // returns either true or false. true if bee dies. false if bee is alive
-bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHasPollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, int ground_y_coordinate, bool &bulletCollided) {
+bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHasPollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, int ground_y_coordinate, bool bulletExists, bool &bulletCollided) {
 	bool isCollidingWithBullet = areColliding(bee_x_coordinate, bee_y_coordinate, beeWidth, beeHeight, bullet_x_coordinate, bullet_y_coordinate, bulletWidth, bulletHeight);
-	if (isCollidingWithBullet) {
+	if (isCollidingWithBullet && bulletExists) {
 			bulletCollided = true;
 			return false;
 
@@ -610,7 +610,7 @@ void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovi
 
 	x_coordinateAfterMovement = moveBeeX(x_coordinate, isMovingRight, beeMovementValue);
 
-	bool isBeeCollidingWithPlayer = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, playerX - 10, playerY - 10, playerWidth + 20, playerHeight + 20);
+	bool isBeeCollidingWithPlayer = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, playerX, playerY, playerWidth, playerHeight);
 	if (isBeeCollidingWithPlayer) {
 		directionChanged = true;
 		isMovingRight = !isMovingRight;
