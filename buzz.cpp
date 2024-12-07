@@ -116,15 +116,43 @@ int main()
 
 	int playerWidth = 2 * boxPixelsX;
 	int playerHeight = 2 * boxPixelsY;
+
+	int initialSprayCans = 3;
+	int spraysPerSprayCan = 56;
+	int changeCanStateAfterSprays = 8;
+
+
+	int spraysCansLeft = initialSprayCans - 1;
+	int spraysLeft = spraysPerSprayCan;
 	
 	Texture playerTexture;
 	Sprite playerSprite;
 	playerTexture.loadFromFile("Textures/spray.png");
 	playerSprite.setTexture(playerTexture);
-	// playerSprite.setTextureRect(IntRect(0, 0, boxPixelsX, boxPixelsY));
 
-		// Initializing Bullet and Bullet Sprites
-		// Data for bullet / Spray pellet
+
+	int playerHollowX = 21;
+	int playerHollowY = 30;
+
+
+	float playerBackgroundX = player_x + playerHollowX;
+	float playerBackgroundY = player_y + playerHollowY;
+	int playerBackgroundOffsetX = 0;
+	int playerBackgroundOffsetY = 0;
+	int playerBackgroundWidth = 21;
+	int playerBackgroundHeight = 33;
+	int playerBackgroundLevelHeight = playerBackgroundHeight / (spraysPerSprayCan / changeCanStateAfterSprays);
+
+	// the white rectangle behind player
+	Texture playerBackgroundTexture;
+	Sprite playerBackground;
+	playerBackgroundTexture.loadFromFile("Textures/playerBackground.jpg");
+	playerBackground.setTexture(playerBackgroundTexture);
+	playerBackground.setPosition(playerBackgroundX, playerBackgroundY);
+	// playerBackground.setFillColor(Color::White);
+
+
+
 
 	float bullet_x = player_x;
 	float bullet_y = player_y;
@@ -241,6 +269,7 @@ int main()
 			}
 			else if (e.type == Event::KeyPressed) {
 				// movement of the spray can
+				float playerPreviousX = player_x;
 				if (e.key.code == sf::Keyboard::Right) {
 					player_x = movePlayer(player_x, playerWidth, playerMovementValue, true);
 
@@ -249,8 +278,27 @@ int main()
 
 				// shoot spray
 				} else if (e.key.code == sf::Keyboard::Space) {
+					if (!bullet_exists) {
+						spraysLeft--;
+
+						if (!((spraysPerSprayCan - spraysLeft) % changeCanStateAfterSprays)) {
+							playerBackgroundOffsetY += playerBackgroundLevelHeight;
+						}
+					}
+
 					bullet_exists = true;
+
+					if (!spraysLeft) {
+						spraysCansLeft--;
+						spraysLeft = spraysPerSprayCan;
+						playerBackgroundOffsetY = 0;
+					}
+					if (spraysCansLeft < 0) {
+						// game over
+					}
 				}
+
+				playerBackgroundX += player_x - playerPreviousX;
 			}
 		}
 
@@ -279,7 +327,8 @@ int main()
 		drawFlowers(window, flowerSprites, flowerStartIndex, isFlowerPollinated, totalFlowers, groundY, flowerHeight);
 		drawHoneycombs(window, regularHoneycombSprites, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRegularHoneycombsDestroyed, regularBeesSpawned, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
 		drawHummingBird(window, hummingBirdSprite, hummingBirdX, hummingBirdY);
-		drawPlayer(window, player_x, player_y, playerSprite);
+		drawPlayer(window, player_x, player_y, playerSprite, playerBackgroundX, playerBackgroundY, playerBackgroundOffsetX, playerBackgroundOffsetY, playerBackgroundWidth, playerBackgroundHeight, playerBackground);
+
 		window.display();
 		window.clear();
 	}
@@ -679,9 +728,12 @@ int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool is
 	}
 }
 
-void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite) {
+void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite, float backgroundX, float backgroundY, int backgroundOffsetX, int backgroundOffsetY, int backgroundWidth, int backgroundHeight,  Sprite& backgroundSprite) {
 	playerSprite.setPosition(player_x, player_y);
 	window.draw(playerSprite);
+	backgroundSprite.setPosition(backgroundX + backgroundOffsetX, backgroundY + backgroundOffsetY);
+	backgroundSprite.setTextureRect(sf::IntRect(backgroundOffsetX, backgroundOffsetY, backgroundWidth - backgroundOffsetX, backgroundHeight - backgroundOffsetY));
+	window.draw(backgroundSprite);
 }
 
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
