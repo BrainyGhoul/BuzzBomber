@@ -738,7 +738,7 @@ float midCoordinate(float startCoordinate, int jump) {
 	return startCoordinate + (jump / 2);
 }
 
-// returns false if not moved (reached the destination already)
+// returns false if reached the destination
 bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float destinationY, float stepValue) {
 	float totalChangeInX = destinationX - spriteX;
 	float totalChangeInY = destinationY - spriteY;
@@ -751,6 +751,7 @@ bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float
 		if (distance < stepValue) {
 			spriteX = destinationX;
 			spriteY = destinationY;
+			return false;
 		} else {
 			spriteX += stepValue * unitVectorX;
 			spriteY += stepValue * unitVectorY;
