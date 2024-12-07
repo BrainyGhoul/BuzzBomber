@@ -21,6 +21,9 @@ const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
 // Initializing GameGrid.
 int gameGrid[gameRows][gameColumns] = {};
 
+bool areMidCoordinatesSame(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height);
+float midCoordinate(float startCoordinate, int jump);
+bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float destinationY, float stepValue);
 float moveBeeX(float x_coordinate, bool isMovingRight, int beeMovementValue);
 bool areColliding(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height);
 float startingIndexDifference(float startingOld, int jumpOld, int jumpNew);
@@ -527,5 +530,43 @@ bool areColliding(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Hei
             return true;
         }
     }
+    return false;
+}
+
+bool areMidCoordinatesSame(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height) {
+	if (midCoordinate(sprite1_x, sprite1Width) == midCoordinate(sprite2_x, sprite2Width)) {
+		if (midCoordinate(sprite1_y, sprite1Height) == midCoordinate(sprite2_y, sprite2Height)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+float midCoordinate(float startCoordinate, int jump) {
+	return startCoordinate + (jump / 2);
+}
+
+// returns false if not moved (reached the destination already)
+bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float destinationY, float stepValue) {
+	float totalChangeInX = destinationX - spriteX;
+	float totalChangeInY = destinationY - spriteY;
+	float distance = sqrt(pow(totalChangeInX, 2) + pow(totalChangeInY, 2));
+	float unitVectorX = totalChangeInX / distance;
+	float unitVectorY = totalChangeInY / distance;
+
+
+	if (distance) {
+		if (distance < stepValue) {
+			spriteX = destinationX;
+			spriteY = destinationY;
+		} else {
+			spriteX += stepValue * unitVectorX;
+			spriteY += stepValue * unitVectorY;
+		}
+		return true;
+	}
+
     return false;
 }
