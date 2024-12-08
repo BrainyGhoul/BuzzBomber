@@ -22,6 +22,8 @@ const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
 // Initializing GameGrid.
 int gameGrid[gameRows][gameColumns] = {};
 
+
+float moveInsideScreen(float coordinate, int extremeCoordinate, int jump);
 bool areMidCoordinatesSame(int sprite1_x, int sprite1_y, int sprite1Width, int sprite1Height, int sprite2_x, int sprite2_y, int sprite2Width, int sprite2Height);
 float midCoordinate(float startCoordinate, int jump);
 bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float destinationY, float stepValue);
@@ -852,15 +854,20 @@ void drawBullet(sf::RenderWindow& window, float& bullet_x, float& bullet_y, Spri
 // this function adjusts the coordinate index and also handles edge cases
 float adjustedStartingIndexDifference(float startingOld, int jumpOld, int jumpNew, int extremeCoordinate) {
 	float startingIndex = startingIndexDifference(startingOld, jumpOld, jumpNew);
-	if (startingIndex < 0) {
-		startingIndex = 0;
-	} else if (startingIndex + jumpNew > extremeCoordinate) {
-		startingIndex = extremeCoordinate - jumpNew;
-	}
 
-	return startingIndex;
+	return moveInsideScreen(startingIndex, extremeCoordinate, jumpNew);
 }
 
+
+float moveInsideScreen(float coordinate, int extremeCoordinate, int jump) {
+	if (coordinate < 0) {
+		coordinate = 0;
+	} else if (coordinate + jump > extremeCoordinate) {
+		coordinate = extremeCoordinate - jump;
+	}
+
+	return coordinate;
+}
 
 // this function returns the subrataction from the index you need to make an object centered based
 // on the position of another object
