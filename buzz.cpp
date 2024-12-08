@@ -46,6 +46,8 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBirdX, float hummingBirdY);
 void moveHummingBirdToPoint(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, float destinationX, float destinationY, int hummingBirdWidth, int hummingBirdHeight, float stepValue);
 void drawRemainingBottles(RenderWindow &window, float startingX, float startingY, Texture bottleTexture, int remainingBottles, int bottleWidth, int bottleHeight);
+float adjustedStartingIndexDifference(float startingOld, int jumpOld, int jumpNew, int extremeCoordinate);
+
 
 
 int main()
@@ -556,17 +558,6 @@ void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinate
 void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCoords[][2], bool isHoneycombCreated[], bool hasPollinated[], float beesCoords[][2], bool honeycombDestroyed[], int noOfHoneycombs, int beeHeight, int beeWidth, int honeycombHeight, int honeycombWidth) {
 	for (int i = 0; i < noOfHoneycombs; i++) {
 		if (isHoneycombCreated[i] && !honeycombDestroyed[i]) {
-			// taking care of edge cases
-			if (honeycombCoords[i][0] < 0) {
-				honeycombCoords[i][0] = 0;
-			} else if (honeycombCoords[i][0] + honeycombWidth > resolutionX) {
-				honeycombCoords[i][0] = resolutionX - honeycombWidth;
-			}
-
-			if (honeycombCoords[i][1] < 0) {
-				honeycombCoords[i][1] = 0;
-			}
-
 			// displaying honeycombs
 			honeycombs[i].setPosition(honeycombCoords[i][0], honeycombCoords[i][1]);
 			window.draw(honeycombs[i]);
@@ -586,8 +577,8 @@ void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesH
 
 			// creating honeycomb if bullet has collided
 			if (bulletCollided) {
-				honeycombCoords[i][0] = startingIndexDifference(beesCoords[i][0], beeWidth, honeycombWidth);
-				honeycombCoords[i][1] = startingIndexDifference(beesCoords[i][1], beeHeight, honeycombHeight);
+				honeycombCoords[i][0] = adjustedStartingIndexDifference(beesCoords[i][0], beeWidth, honeycombWidth, resolutionX);
+				honeycombCoords[i][1] = adjustedStartingIndexDifference(beesCoords[i][1], beeHeight, honeycombHeight, resolutionY);
 				bullet_y_coordinate =  honeycombCoords[i][1] - bulletHeight;
 				isHoneycombCreated[i] = true;
 
@@ -823,6 +814,19 @@ void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock) {
 void drawBullet(sf::RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite) {
 	bulletSprite.setPosition(bullet_x, bullet_y);
 	window.draw(bulletSprite);
+}
+
+
+// this function adjusts the coordinate index and also handles edge cases
+float adjustedStartingIndexDifference(float startingOld, int jumpOld, int jumpNew, int extremeCoordinate) {
+	float startingIndex = startingIndexDifference(startingOld, jumpOld, jumpNew);
+	if (startingIndex < 0) {
+		startingIndex = 0;
+	} else if (startingIndex + jumpNew > extremeCoordinate) {
+		startingIndex = extremeCoordinate - jumpNew;
+	}
+
+	return startingIndex;
 }
 
 
