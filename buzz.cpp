@@ -780,16 +780,16 @@ void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinate
 			if (flowerIndex < totalFlowers - 1) {
 				bool isBeeCollidingWithSecondFlower = areColliding(beesCoords[i][0], beesCoords[i][1], beeWidth, beeHeight, flowerStartIndex[flowerIndex + 1][0], groundY - beeRowHeight, flowerWidth, 1000);
 				// if bee is colliding with flowers
-			if (isBeeCollidingWithFirstFlower && isBeeCollidingWithSecondFlower) {
-				if (isFlowerPollinated[flowerIndex + 1] && !isFlowerPollinated[flowerIndex]) {
-					break;
-				} else if (!isFlowerPollinated[flowerIndex] && !isFlowerPollinated[flowerIndex + 1]) {
-					float beeMid = beesCoords[i][0] + (beeWidth / 2);
+				if (isBeeCollidingWithFirstFlower && isBeeCollidingWithSecondFlower) {
+					if (isFlowerPollinated[flowerIndex + 1] && !isFlowerPollinated[flowerIndex]) {
+						break;
+					} else if (!isFlowerPollinated[flowerIndex] && !isFlowerPollinated[flowerIndex + 1]) {
+						float beeMid = beesCoords[i][0] + (beeWidth / 2);
 						if (beeMid > flowerStartIndex[flowerIndex + 1][0]) {
-						flowerIndex++;
+							flowerIndex++;
+						}
+						break;
 					}
-					break;
-				}
 				}
 			// is flower is not pollinated
 			} else if (isBeeCollidingWithFirstFlower && !isFlowerPollinated[flowerIndex]) {
@@ -877,7 +877,7 @@ bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool be
 			bulletCollided = true;
 			return false;
 
-		// of if it goes into the ground
+	// of if it goes into the ground
 	} else if (bee_y_coordinate + beeHeight > ground_y_coordinate) {
 		return false;
 	
@@ -1081,10 +1081,10 @@ bool allTrue(bool arr[], int size) {
 	for (int i = 0; i < size; i++) {
 		if (!arr[i]) {
 			return false;
-	}
+		}
 	}
 	return true;
-}
+} 
 
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite, float backgroundX, float backgroundY, int backgroundOffsetX, int backgroundOffsetY, int backgroundWidth, int backgroundHeight,  Sprite& backgroundSprite) {
 	playerSprite.setPosition(player_x, player_y);
@@ -1204,7 +1204,7 @@ void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoo
 				spriteCoords[i][0] = moveInsideScreen((rand() % resolutionX - (2 * spriteWidth)) + spriteWidth, resolutionX, spriteWidth);
 				spriteCoords[i][1] = moveInsideScreen((rand() % resolutionY - (2 * spriteHeight)) + spriteWidth, resolutionY, spriteWidth);
 				collidingWithOtherSprites = staticSpritesCollision(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, false);
-				isAboveTheGroundEnough = !areColliding(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, 0, groundY - playerHeight - 70, resolutionX, resolutionY - (groundY - playerHeight));
+				isAboveTheGroundEnough = !areColliding(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, 0, groundY - playerHeight - 70, resolutionX, 1000);
 			} while (collidingWithOtherSprites || !isAboveTheGroundEnough);
 			isSpriteCreated[i] = true;
 		}
