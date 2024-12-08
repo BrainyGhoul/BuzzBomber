@@ -719,11 +719,10 @@ void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesH
 				honeycombCoords[i][0] = adjustedStartingIndexDifference(beesCoords[i][0], beeWidth, honeycombWidth, resolutionX);
 				honeycombCoords[i][1] = adjustedStartingIndexDifference(beesCoords[i][1], beeHeight, honeycombHeight, resolutionY);
 				bullet_y_coordinate =  honeycombCoords[i][1] - bulletHeight;
-				isHoneycombCreated[i] = true;
 
 				// checking if any honeycombs are overlapping with the current honeycomb. if they are, then honeycomb isn't created
-				if (staticSpritesCollision(honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight, false)) {
-					isHoneycombCreated[i] = false;
+				if (!staticSpritesCollision(honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight, false)) {
+					isHoneycombCreated[i] = true;
 				}
 			}
 
@@ -1040,13 +1039,12 @@ void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoo
 		if (i >= additionalSpritesIndex) {
 			bool collidingWithOtherSprites;
 			do {
-				// collidingWithOtherSprites = false;
-				isSpriteCreated[i] = true;
 				spriteCoords[i][0] = moveInsideScreen((rand() % resolutionX - (2 * spriteWidth)) + spriteWidth, resolutionX, spriteWidth);
 				spriteCoords[i][1] = moveInsideScreen((rand() % resolutionY - (2 * spriteHeight)) + spriteWidth, resolutionY, spriteWidth);
 				collidingWithOtherSprites = staticSpritesCollision(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, false, i);
 
 			} while (collidingWithOtherSprites);
+			isSpriteCreated[i] = true;
 
 		}
 	}
