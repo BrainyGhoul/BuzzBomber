@@ -33,7 +33,7 @@ float startingIndexDifference(float startingOld, int jumpOld, int jumpNew);
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite, float backgroundX, float backgroundY, int backgroundOffsetX, int backgroundOffsetY, int backgroundWidth, int backgroundHeight,  Sprite& backgroundSprite);
 void moveBullet(float& bullet_y, bool& bullet_exists, Clock& bulletClock);
 void drawBullet(RenderWindow& window, float& bullet_x, float& bullet_y, Sprite& bulletSprite);
-int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight);
+int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight, float flowersCoords[][2], bool flowersPollinated[], int flowerWidth, int noOfFlowers);
 void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMovingRight[], Clock beesClock[], bool beesAlive[], bool hasPollinated[], bool honeycombCreated[], float honeycombCoords[][2], bool honeycombDestroyed[], bool areBeeHivesCreated[], float beeHiveCoords[][2], int beeMovementValue, float beeSpeed, int beeHeight, int beeWidth, bool areRegular, int honeycombHeight, int honeycombWidth, int noOfHoneycombs, float playerX, float playerY, int playerWidth, int playerHeight, int beeHiveWidth, int beeHiveHeight, int beeRowHeight, int groundY);
 void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovingRight, bool &isBeeAlive, bool &isBeeHiveCreated, float &beeHiveX, float &beeHiveY, float honeycombCoords[][2], bool havePollinated[], bool honeycombCreated[], bool honeycombDestroyed[], int beeMovementValue, int beeHeight, int beeWidth, int isRegular, int noOfBees, int honeycombHeight, int honeycombWidth, int noOfHoneycombs, float playerX, float playerY, int playerWidth, int playerHeight, int beeHiveWidth, int beeHiveHeight, int beeRowHeight, int groundY);
 void spawnBees(Sprite bees[], float beesCoords[][2], Clock beesClock[], bool beesAlive[], bool areBeesMovingRight[], int &beesSpawned, int totalBees, float delay, float offset, int beeWidth, int beeHeight);
@@ -41,8 +41,8 @@ void drawBees(RenderWindow& window, int noOfBees, Sprite bees[], float beesCoord
 bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool beeHaspollinated, int beeWidth, int beeHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, int ground_y_coordinate, bool bulletExists, bool &bulletCollided);
 void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesHavepollinated[], bool isHoneycombCreated[], bool isHoneycombDestroyed[], float honeycombCoords[][2], int beesSpawned, int beeWidth, int beeHeight, float bullet_x_coordinate, float &bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists, int honeycombWidth, int honeycombHeight, int ground_y_coordinate);
 void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCoords[][2], bool isHoneycombCreated[], bool hasPollinated[], float beesCoords[][2], bool honeycombDestroyed[], int noOfHoneycombs, int beeHeight, int beeWidth, int honeycombHeight, int honeycombWidth);
-void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], int noOfBees, int beeHeight, int beeWidth, int flowerStartIndex[], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, int groundY, int beeRowHeight);
-void drawFlowers(RenderWindow& window, Sprite flowers[], int startIndex[], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight);
+void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], bool areBeesMovingRight[], int noOfBees, int beeHeight, int beeWidth, float flowerStartIndex[][2], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, float &playerX, float &playerY, float &backgroundX, int playerWidth, int playerHeight, int groundY, int beeRowHeight);
+void drawFlowers(RenderWindow& window, Sprite flowers[], float startIndex[][2], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight);
 void destroyObject(bool objectDestroyed[], float objectCoords[][2], bool objectCreated[], int noOfObjects, int objectWidth, int objectHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists);
 void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float honeycombCoords[][2], bool isHoneycombCreated[], int honeycombWidth, int honeycombHeight, int honeycombs, bool areBeesAlive[], bool hasPollinated[], bool honeycombDestroyed[], int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, float hummingBirdRestX, float hummingBirdRestY, int nectarSuckTime);
 void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBirdX, float hummingBirdY);
@@ -261,7 +261,7 @@ int main()
 
 
 	// flowers
-	int flowerWidth = 32;
+	int flowerWidth = 16;
 	while (resolutionX % flowerWidth) {
 		flowerWidth--;
 	}
@@ -272,10 +272,11 @@ int main()
 	Sprite flowerSprites[totalFlowers];
 	bool isFlowerPollinated[totalFlowers] = {};
 
-	int flowerStartIndex[totalFlowers];
+	float flowerStartIndex[totalFlowers][2];
 	for (int i = 0; i < totalFlowers; i++) {
 		// adding i because the next flower starts with the next index
-		flowerStartIndex[i] = (i * flowerWidth);
+		flowerStartIndex[i][0] = (i * flowerWidth);
+		flowerStartIndex[i][1] = groundY - flowerHeight;
 	}
 
 
@@ -296,7 +297,7 @@ int main()
 
 	Texture hummingBirdTexture;
 	Sprite hummingBirdSprite;
-	bool isHummingBirdSick = true;
+	bool isHummingBirdSick = false;
 	bool isHummingBirdSuckingNectar = false;
 	float hummingBirdX = hummingBirdRestX;
 	float hummingBirdY = hummingBirdRestY;
@@ -326,9 +327,9 @@ int main()
 	staticSpritesCollision(0, 0 , 0, 0, false, 0, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
 
 
+	initializeSprites(beeHiveTexture, beeHives, beeHiveCoords, noOfBeeHives, LEVEL1_BEEHIVES, areBeeHivesCreated, beeHiveWidth, beeHiveHeight, groundY, playerHeight);
 	initializeSprites(redHoneycombTexture, redHoneycombSprites, redHoneycombCoords, noOfRedHoneycombs, 0, isRedHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
 	initializeSprites(regularHoneycombTexture, regularHoneycombSprites, regularHoneycombCoords, noOfRegularHoneycombs, LEVEL1_HONEYCOMB, isRegularHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
-	initializeSprites(beeHiveTexture, beeHives, beeHiveCoords, noOfBeeHives, LEVEL1_BEEHIVES, areBeeHivesCreated, beeHiveWidth, beeHiveHeight, groundY, playerHeight);
 
 
 
@@ -343,11 +344,12 @@ int main()
 			else if (e.type == Event::KeyPressed) {
 				// movement of the spray can
 				float playerPreviousX = player_x;
-				if (e.key.code == sf::Keyboard::Right) {
-					player_x = movePlayer(player_x, playerWidth, playerMovementValue, true);
-
-				} else if (e.key.code == sf::Keyboard::Left) {
-					player_x = movePlayer(player_x, playerWidth, playerMovementValue, false);
+				if (e.key.code == sf::Keyboard::Right || e.key.code == sf::Keyboard::Left) {
+					bool isRight = true;
+					if (e.key.code == sf::Keyboard::Left) {
+						isRight = false;
+					}
+					player_x = movePlayer(player_x, playerWidth, playerMovementValue, isRight, flowerStartIndex, isFlowerPollinated, flowerWidth, totalFlowers);
 
 				// shoot spray
 				} else if (e.key.code == sf::Keyboard::Space) {
@@ -395,7 +397,7 @@ int main()
 		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeesHavePollinated, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, regularHoneycombCoords, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
 		destroyObject(areRegularHoneycombsDestroyed, regularHoneycombCoords, isRegularHoneycombCreated, noOfRegularHoneycombs, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
 		destroyObject(areBeeHivesDestroyed, beeHiveCoords, areBeeHivesCreated, noOfBeeHives, beeHiveWidth, beeHiveHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
-		beePollinatesGround(regularBees, regularBeesAlive, regularBeesHavePollinated, regularBeesCoords, regularBeesSpawned, regularBeeHeight, regularBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, groundY, beeRowHeight);
+		beePollinatesGround(regularBees, regularBeesAlive, regularBeesHavePollinated, regularBeesCoords, areRegularMovingRight, regularBeesSpawned, regularBeeHeight, regularBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, player_x, player_y, playerBackgroundX, playerWidth, playerHeight, groundY, beeRowHeight);
 		drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords, regularBeesAlive);
 
 
@@ -646,51 +648,82 @@ void destroyObject(bool objectDestroyed[], float objectCoords[][2], bool objectC
 	}
 }
 
-void drawFlowers(RenderWindow& window, Sprite flowers[], int startIndex[], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight) {
+void drawFlowers(RenderWindow& window, Sprite flowers[], float startIndex[][2], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight) {
 	for (int i = 0; i < totalFlowers; i++) {
 		if (isFlowerPollinated[i]) {
-			flowers[i].setPosition(startIndex[i], groundY - flowerHeight);
+			flowers[i].setPosition(startIndex[i][0], startIndex[i][1]);
 			window.draw(flowers[i]);
 		}
 	}
 }
 
 
-void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], int noOfBees, int beeHeight, int beeWidth, int flowerStartIndex[], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, int groundY, int beeRowHeight) {
+void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], bool areBeesMovingRight[], int noOfBees, int beeHeight, int beeWidth, float flowerStartIndex[][2], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, float &playerX, float &playerY, float &backgroundX, int playerWidth, int playerHeight, int groundY, int beeRowHeight) {
 	for (int i = 0; i < noOfBees; i++) {
-		// if in the air, no pollination anyway
+		// if in the air, no pollination anyway or dead
 		if (beesCoords[i][1] + beeHeight < groundY - beeRowHeight || !beesAlive[i]) {
 			continue;
 		}
 
 		int flowerIndex;
-		// if the be
-		for (flowerIndex = 0; flowerIndex < totalFlowers - 1; flowerIndex++) {
-			bool isBeeCollidingWithFirstFlower = areColliding(beesCoords[i][0], beesCoords[i][1], beeWidth, beeHeight, flowerStartIndex[flowerIndex], groundY - beeRowHeight, flowerWidth, 1000);
-			bool isBeeCollidingWithSecondFlower = areColliding(beesCoords[i][0], beesCoords[i][1], beeWidth, beeHeight, flowerStartIndex[flowerIndex + 1], groundY - beeRowHeight, flowerWidth, 1000);
+		// looping throuhg flowers
+		for (flowerIndex = 0; flowerIndex < totalFlowers; flowerIndex++) {
+			bool isBeeCollidingWithFirstFlower = areColliding(beesCoords[i][0], beesCoords[i][1], beeWidth, beeHeight, flowerStartIndex[flowerIndex][0], groundY - beeRowHeight, flowerWidth, 1000);
+			
+			if (flowerIndex < totalFlowers - 1) {
+				bool isBeeCollidingWithSecondFlower = areColliding(beesCoords[i][0], beesCoords[i][1], beeWidth, beeHeight, flowerStartIndex[flowerIndex + 1][0], groundY - beeRowHeight, flowerWidth, 1000);
+				// if bee is colliding with flowers
 			if (isBeeCollidingWithFirstFlower && isBeeCollidingWithSecondFlower) {
 				if (isFlowerPollinated[flowerIndex + 1] && !isFlowerPollinated[flowerIndex]) {
 					break;
 				} else if (!isFlowerPollinated[flowerIndex] && !isFlowerPollinated[flowerIndex + 1]) {
 					float beeMid = beesCoords[i][0] + (beeWidth / 2);
-					if (beeMid > flowerStartIndex[flowerIndex + 1]) {
+						if (beeMid > flowerStartIndex[flowerIndex + 1][0]) {
 						flowerIndex++;
 					}
 					break;
 				}
+				}
+			// is flower is not pollinated
 			} else if (isBeeCollidingWithFirstFlower && !isFlowerPollinated[flowerIndex]) {
 				break;
 			}
 		}
 
-		if (flowerIndex < totalFlowers - 1) {
-			beesAlive[i] = false;
-			beesHavePollinated[i] = true;
+		// one pollination happens, they go back unless on the first or last flower
+		if (flowerIndex < totalFlowers) {
 			isFlowerPollinated[flowerIndex] = true;
-		}
-		
+			if (!(flowerIndex == totalFlowers - 1 || !flowerIndex)) {
+				beesHavePollinated[i] = true;
+				areBeesMovingRight[i] = !areBeesMovingRight[i];
+			}
+		}	
 	}
 
+	bool falseArr[totalFlowers] = {};
+	bool isPlayerCollidingWithFlowers = isCollidingWithMultipleSprites(playerX, playerY, playerWidth, playerHeight, flowerStartIndex, isFlowerPollinated, falseArr, flowerWidth, flowerHeight, totalFlowers, -1, false);
+
+	// if the player is in the middle of the flowers, move
+	if (isPlayerCollidingWithFlowers) {
+		int pixel;
+		for (pixel = 0; pixel < resolutionX - playerWidth; pixel++) {
+			bool isFreeSpace = isCollidingWithMultipleSprites(pixel, playerY, playerWidth, playerHeight, flowerStartIndex, isFlowerPollinated, falseArr, flowerWidth, flowerHeight, totalFlowers, -1, false);
+			if (isFreeSpace) {
+				int temp = playerX;
+				playerX = pixel;
+				backgroundX += playerX - temp;
+				break;
+			}
+
+		}
+
+		// if couldn't move, then there was no space
+		if (!(pixel < resolutionX - playerWidth - 1)) {
+			for (int i = 0; i < totalFlowers; i++) {
+				isFlowerPollinated[i] = false;
+			}
+		}
+	}
 }
 
 // set the coordinates of the honeycombs and draw
@@ -737,12 +770,8 @@ bool killBee(Sprite bee, float bee_x_coordinate, float bee_y_coordinate, bool be
 			bulletCollided = true;
 			return false;
 
-	} else if 
-		// dies if it pollinates
-		(beeHasPollinated ||
 		// of if it goes into the ground
-		bee_y_coordinate + beeHeight > ground_y_coordinate) {
-		
+	} else if (bee_y_coordinate + beeHeight > ground_y_coordinate) {
 		return false;
 	
 	}
@@ -768,7 +797,9 @@ void spawnBees(Sprite bees[], float beesCoords[][2], Clock beesClock[], bool bee
 		// starting clock from 0 and incrementing beesSpawned
 		beesClock[beesSpawned].restart();
 		beesAlive[beesSpawned] = true;
-		beesCoords[beesSpawned][0] = rand() % 2 ? 0: resolutionX - beeWidth; // based on a random number generated, the initial coordinate is set
+		// beesCoords[beesSpawned][0] = rand() % 2 ? 0: resolutionX - beeWidth; // based on a random number generated, the initial coordinate is set
+		beesCoords[beesSpawned][0] = 0;
+		beesCoords[beesSpawned][1] = 450;
 		timeSinceLastSpawn.restart();
 
 		// if at the top left corner, moving right otherwise moving left
@@ -867,21 +898,25 @@ void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovi
 	if (isBeeCollidingWithRightWall && isMovingRight) {
 		directionChanged = true;
 		isMovingRight = !isMovingRight;
-		x_coordinate = resolutionX - beeWidth;
+		x_coordinate = resolutionX;
 
 	} else if (isBeeCollidingWithLeftWall && !isMovingRight) {
 		directionChanged = true;
 		isMovingRight = !isMovingRight;
-		x_coordinate = 0;
-	} else if (isBeeCollidingWithPlayer) {
-		directionChanged = true;
-		isMovingRight = !isMovingRight;
-		return;
+		x_coordinate = -beeWidth;
+	// } else if (isBeeCollidingWithPlayer) {
+	// 	directionChanged = true;
+	// 	isMovingRight = !isMovingRight;
+	// 	return;
 	}
 
 
 	x_coordinateAfterMovement = moveBeeX(x_coordinate, isMovingRight, beeMovementValue);
-	isBeeCollidingWithPlayer = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, playerX, playerY, playerWidth, playerHeight);
+
+
+	// isBeeCollidingWithPlayer = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, playerX, playerY, playerWidth, playerHeight);
+	isBeeCollidingWithPlayer = false;
+
 
 	// if direction is changed and player is not hit move down
 	if (directionChanged) {
@@ -907,21 +942,41 @@ float moveBeeX(float x_coordinate, bool isMovingRight, int beeMovementValue) {
 	}
 }
 
-
-int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight) {
+// governs the movmeent of the player. stops player from moving where they shouldn't
+int movePlayer(float player_x, int playerWidth, int playerMovementValue, bool isRight, float flowersCoords[][2], bool flowersPollinated[], int flowerWidth, int noOfFlowers) {
+	float valueAfterMovement = player_x;
 	if (isRight) {
 		// adding playerWidth so that we get the right border of the sprite
 		if (player_x + playerWidth + playerMovementValue > resolutionX) {
-			return resolutionX - playerWidth;
+			valueAfterMovement = resolutionX - playerWidth;
+		} else {
+			valueAfterMovement += playerMovementValue;
 		}
-		return player_x + playerMovementValue;
 	} else {
-		// 
 		if (player_x - playerMovementValue < 0) {
-			return 0;
+			valueAfterMovement = 0;
+		} else {
+			valueAfterMovement -= playerMovementValue;
 		}
-		return player_x - playerMovementValue;
 	}
+	bool falseArr[noOfFlowers] = {};
+	bool isPlayerCollidingWithFlowers = isCollidingWithMultipleSprites(valueAfterMovement, 0, playerWidth, resolutionY, flowersCoords, flowersPollinated, falseArr, flowerWidth, resolutionY, noOfFlowers, -1, false);
+	// if player is moving in the flowers, don't let them
+	if (isPlayerCollidingWithFlowers) {
+		return player_x;
+	}
+	return valueAfterMovement;
+
+}
+
+
+bool allTrue(bool arr[], int size) {
+	for (int i = 0; i < size; i++) {
+		if (!arr[i]) {
+			return false;
+	}
+	}
+	return true;
 }
 
 void drawPlayer(RenderWindow& window, float& player_x, float& player_y, Sprite& playerSprite, float backgroundX, float backgroundY, int backgroundOffsetX, int backgroundOffsetY, int backgroundWidth, int backgroundHeight,  Sprite& backgroundSprite) {
@@ -1037,15 +1092,14 @@ void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoo
 		
 		int additionalSpritesIndex = noOfSprites - noOfAdditionalSprites;
 		if (i >= additionalSpritesIndex) {
-			bool collidingWithOtherSprites;
+			bool collidingWithOtherSprites, isAboveTheGroundEnough;
 			do {
 				spriteCoords[i][0] = moveInsideScreen((rand() % resolutionX - (2 * spriteWidth)) + spriteWidth, resolutionX, spriteWidth);
 				spriteCoords[i][1] = moveInsideScreen((rand() % resolutionY - (2 * spriteHeight)) + spriteWidth, resolutionY, spriteWidth);
-				collidingWithOtherSprites = staticSpritesCollision(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, false, i);
-
-			} while (collidingWithOtherSprites);
+				collidingWithOtherSprites = staticSpritesCollision(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, false);
+				isAboveTheGroundEnough = !areColliding(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, 0, groundY - playerHeight - 70, resolutionX, resolutionY - (groundY - playerHeight));
+			} while (collidingWithOtherSprites || !isAboveTheGroundEnough);
 			isSpriteCreated[i] = true;
-
 		}
 	}
 
