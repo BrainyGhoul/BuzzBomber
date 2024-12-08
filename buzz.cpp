@@ -690,8 +690,8 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 			// cout << spriteX << "\t" << spriteY << endl;
 			spriteFound = true;
 			onSprite = false;
-					hummingBirdMoveTimer.restart();
-			}
+			hummingBirdMoveTimer.restart();
+		}
 
 	}
 
