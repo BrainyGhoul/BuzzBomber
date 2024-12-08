@@ -51,13 +51,14 @@ void drawRemainingBottles(RenderWindow &window, float startingX, float startingY
 float adjustedStartingIndexDifference(float startingOld, int jumpOld, int jumpNew, int extremeCoordinate);
 void drawBeeHives(RenderWindow &window, Sprite hiveSprites[], float beeHiveCoords[][2], bool isHiveCreated[], bool isHiveDestroyed[], int noOfBeeHives);
 void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoords[][2], int noOfSprites, int noOfAdditionalSprites, bool isSpriteCreated[], int spriteWidth, int spriteHeight, int groundY, int playerHeight);
-
+bool staticSpritesCollision(float spriteX, float spriteY, int spriteWidth, int spriteHeight, bool destroyCollidedObject,  int spriteIndex, bool firstCall,  int honeycombheight, int honeycombwidth,  int noofregularhoneycombs, float regularhoneycombcoords[][2],  bool regularhoneycombcreated[], bool regularhoneycombdestroyed[],  int noofredhoneycombs, float redhoneycombcoords[][2],  bool redhoneycombcreated[], bool redhoneycombdestroyed[],  int noofbeehives, float beehivecoords[][2],  bool beehivecreated[], bool beehivedestroyed[], int beehivewidth, int beehiveheight);
+bool isCollidingWithMultipleSprites(float sprite1X, float sprite1Y, int sprite1Width, int sprite1Height, float (*sprite2Coords)[2], bool *sprite2Created, bool *sprite2Destroyed, int sprite2Width, int sprite2Height, int sprite2Length, int sprite1Index, bool destroyCollidedObject);
 
 
 int main()
 {
 	// levels
-	const int LEVEL1_REGULAR = 1;
+	const int LEVEL1_REGULAR = 100;
 	const int LEVEL2_REGULAR = 15;
 	const int LEVEL3_REGULAR = 20;
 
@@ -68,6 +69,10 @@ int main()
 	const int LEVEL1_HONEYCOMB = 3;
 	const int LEVEL2_HONEYCOMB = 9;
 	const int LEVEL3_HONEYCOMB = 15;
+	
+	const int LEVEL1_BEEHIVES = 5;
+	const int LEVEL2_BEEHIVES = 2;
+	const int LEVEL3_BEEHIVES = 3;
 
 	const float LEVEL1_REGULAR_DELAY = 1;
 	const float LEVEL2_REGULAR_DELAY = 1;
@@ -84,6 +89,7 @@ int main()
 	const float LEVEL1_FAST_OFFSET = 1;
 	const float LEVEL2_FAST_OFFSET = 1;
 	const float LEVEL3_FAST_OFFSET = 1;
+
 
 	// speeds. this speed is number of boxPixels per second
 	const float regularSpeed = 20;
@@ -189,7 +195,7 @@ int main()
 	int regularBeesSpawned = 0;
 
 
-	Texture beeTexture;
+	Texture regularBeeTexture;
 	Clock regularBeesClock[LEVEL1_REGULAR];
 	Sprite regularBees[LEVEL1_REGULAR];
 	// column 0: x coordinate, column 1: y coordinate
@@ -198,11 +204,33 @@ int main()
 	bool regularBeesAlive[LEVEL1_REGULAR] = {};
 	bool regularBeesHavePollinated[LEVEL1_REGULAR] = {};
 
-	beeTexture.loadFromFile("Textures/Regular_bee.png");
+	regularBeeTexture.loadFromFile("Textures/Regular_bee.png");
 	for (int i = 0; i < LEVEL1_REGULAR; i++) {
-		regularBees[i].setTexture(beeTexture);
-		regularBees[i].setTextureRect(sf::IntRect(0, 0, boxPixelsX, boxPixelsY));
+		regularBees[i].setTexture(regularBeeTexture);
+		regularBees[i].setTextureRect(sf::IntRect(0, 0, regularBeeWidth, regularBeeHeight));
 	}
+
+	// fast bees
+	int fastBeeWidth = 46;
+	int fastBeeHeight = 22;
+	int fastBeesSpawned = 0;
+
+
+	Texture fastBeeTexture;
+	Clock fastBeesClock[LEVEL1_FAST];
+	Sprite fastBees[LEVEL1_FAST];
+	// column 0: x coordinate, column 1: y coordinate
+	float fastBeesCoords[LEVEL1_FAST][2] = {};
+	bool areFastMovingRight[LEVEL1_FAST] = {};
+	bool fastBeesAlive[LEVEL1_FAST] = {};
+	bool fastBeesHavePollinated[LEVEL1_FAST] = {};
+
+	fastBeeTexture.loadFromFile("Textures/Fast_bee.png");
+	for (int i = 0; i < LEVEL1_FAST; i++) {
+		fastBees[i].setTexture(fastBeeTexture);
+		fastBees[i].setTextureRect(sf::IntRect(0, 0, fastBeeWidth, fastBeeHeight));
+	}
+	
 
 	// honeycombs
 	int honeycombHeight = 64;
@@ -217,13 +245,28 @@ int main()
 	float regularHoneycombCoords[noOfRegularHoneycombs][2] = {};
 
 	regularHoneycombTexture.loadFromFile("Textures/honeycomb.png");
-	initializeSprites(regularHoneycombTexture, regularHoneycombSprites, regularHoneycombCoords, noOfRegularHoneycombs, LEVEL1_HONEYCOMB, isRegularHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
+
+
+
+	int noOfRedHoneycombs = LEVEL1_REGULAR;
+	Texture redHoneycombTexture;
+	Sprite redHoneycombSprites[noOfRegularHoneycombs];
+
+	bool isRedHoneycombCreated[noOfRegularHoneycombs] = {};
+	bool areRedHoneycombsDestroyed[noOfRegularHoneycombs] = {};
+	float redHoneycombCoords[noOfRegularHoneycombs][2] = {};
+
+	redHoneycombTexture.loadFromFile("Textures/honeycomb_red.png");
+
 
 
 	// flowers
 	int flowerWidth = 32;
+	while (resolutionX % flowerWidth) {
+		flowerWidth--;
+	}
 	int flowerHeight = 29;
-	int totalFlowers = resolutionX / flowerWidth + 1;
+	int totalFlowers = resolutionX / flowerWidth;
 
 	Texture flowerTexture;
 	Sprite flowerSprites[totalFlowers];
@@ -232,7 +275,7 @@ int main()
 	int flowerStartIndex[totalFlowers];
 	for (int i = 0; i < totalFlowers; i++) {
 		// adding i because the next flower starts with the next index
-		flowerStartIndex[i] = (i * flowerWidth) + i;
+		flowerStartIndex[i] = (i * flowerWidth);
 	}
 
 
@@ -265,13 +308,11 @@ int main()
 	hummingBirdSprite.setColor(Color::Blue);
 
 
-
+	// bee hives
 	int beeHiveWidth = 64;
 	int beeHiveHeight = 64;
 	
-	
-	
-	int noOfBeeHives = LEVEL1_REGULAR;
+	int noOfBeeHives = LEVEL1_REGULAR + LEVEL1_BEEHIVES;
 
 	Texture beeHiveTexture;
 	Sprite beeHives[noOfBeeHives];
@@ -280,9 +321,14 @@ int main()
 	float beeHiveCoords[noOfBeeHives][2];
 
 	beeHiveTexture.loadFromFile("Textures/hive.png");
-	for (int i = 0; i < LEVEL1_REGULAR; i++) {
-		beeHives[i].setTexture(beeHiveTexture);
-	}
+
+	// giving initial state to the function
+	staticSpritesCollision(0, 0 , 0, 0, false, 0, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
+
+
+	initializeSprites(redHoneycombTexture, redHoneycombSprites, redHoneycombCoords, noOfRedHoneycombs, 0, isRedHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
+	initializeSprites(regularHoneycombTexture, regularHoneycombSprites, regularHoneycombCoords, noOfRegularHoneycombs, LEVEL1_HONEYCOMB, isRegularHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
+	initializeSprites(beeHiveTexture, beeHives, beeHiveCoords, noOfBeeHives, LEVEL1_BEEHIVES, areBeeHivesCreated, beeHiveWidth, beeHiveHeight, groundY, playerHeight);
 
 
 
@@ -364,6 +410,87 @@ int main()
 		window.clear();
 	}
 }
+
+
+
+
+// objects that are still e.g honeycomb and hive
+// always use before setting the created field to true
+// this function checks if any of these overlap
+bool staticSpritesCollision(float spriteX, float spriteY, int spriteWidth, int spriteHeight, bool destroyCollidedObject = false, int spriteIndex = -1, bool firstCall = false, int honeycombheight = 0, int honeycombwidth = 0, int noofregularhoneycombs = 0, float regularhoneycombcoords[][2] = nullptr, bool regularhoneycombcreated[] = nullptr, bool regularhoneycombdestroyed[] = nullptr, int noofredhoneycombs = 0, float redhoneycombcoords[][2] = nullptr, bool redhoneycombcreated[] = nullptr, bool redhoneycombdestroyed[] = nullptr, int noofbeehives = 0, float beehivecoords[][2] = nullptr, bool beehivecreated[] = nullptr, bool beehivedestroyed[] = nullptr, int beehivewidth = 0, int beehiveheight = 0) {
+	static int honeycombHeight;
+	static int honeycombWidth;
+	static int noOfRegularHoneycombs;
+	static float (*regularHoneycombCoords)[2];
+	static bool *regularHoneycombCreated;
+	static bool *regularHoneycombDestroyed;
+	static int noOfRedHoneycombs;
+	static float (*redHoneycombCoords)[2];
+	static bool *redHoneycombCreated;
+	static bool *redHoneycombDestroyed;
+	static int beeHiveHeight;
+	static int beeHiveWidth;
+	static int noOfBeeHives;
+	static float (*beeHiveCoords)[2];
+	static bool *beeHiveCreated;
+	static bool *beeHiveDestroyed;
+
+	if (firstCall) {
+		honeycombHeight = honeycombheight;
+		honeycombWidth = honeycombwidth;
+		beeHiveWidth = beehivewidth;
+		beeHiveHeight = beehiveheight;
+
+		noOfRegularHoneycombs = noofregularhoneycombs;
+		noOfRedHoneycombs = noofredhoneycombs;
+		noOfBeeHives = noofbeehives;
+
+		regularHoneycombCoords = regularhoneycombcoords;
+		redHoneycombCoords = redhoneycombcoords;
+		beeHiveCoords = beehivecoords;
+
+		regularHoneycombCreated = regularhoneycombcreated;
+		regularHoneycombDestroyed = regularhoneycombdestroyed;
+		redHoneycombCreated = redhoneycombcreated;
+		redHoneycombDestroyed = redhoneycombdestroyed;
+		beeHiveCreated = beehivecreated;
+		beeHiveDestroyed = beehivedestroyed;
+		return true;
+	} else {
+
+		if (isCollidingWithMultipleSprites(spriteX, spriteY, spriteWidth, spriteHeight, regularHoneycombCoords, regularHoneycombCreated, regularHoneycombDestroyed, honeycombWidth, honeycombHeight, noOfRegularHoneycombs, spriteIndex, destroyCollidedObject) ||
+			isCollidingWithMultipleSprites(spriteX, spriteY, spriteWidth, spriteHeight, redHoneycombCoords, redHoneycombCreated, redHoneycombDestroyed, honeycombWidth, honeycombHeight, noOfRedHoneycombs, spriteIndex, destroyCollidedObject) ||
+			isCollidingWithMultipleSprites(spriteX, spriteY, spriteWidth, spriteHeight, beeHiveCoords, beeHiveCreated, beeHiveDestroyed, beeHiveWidth, beeHiveHeight, noOfBeeHives, spriteIndex, destroyCollidedObject)){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+
+
+// looks through an array of sprites to see if they collide with the sprite in question
+// only works for arrays with same type of sprites
+bool isCollidingWithMultipleSprites(float sprite1X, float sprite1Y, int sprite1Width, int sprite1Height, float (*sprite2Coords)[2], bool *sprite2Created, bool *sprite2Destroyed, int sprite2Width, int sprite2Height, int sprite2Length, int sprite1Index, bool destroyCollidedObject) {
+	for (int i = 0; i < sprite2Length; i++) {
+		
+		// if same elemnt, no collision
+		if (sprite1Width == sprite1Width && sprite1Width == sprite2Width && i == sprite1Index) {
+			return false;
+
+		} else if (*(sprite2Created + i) && !*(sprite2Destroyed + i) && areColliding(sprite1X, sprite1Y, sprite1Width, sprite1Height, **(sprite2Coords + i), *(*(sprite2Coords + i) + 1), sprite2Width, sprite2Height)) {
+			if (destroyCollidedObject) {
+				*sprite2Destroyed = true;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+
 
 
 // draws all the bee Hives
@@ -472,8 +599,7 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 			if (hummingBirdMoveTimer.getElapsedTime().asSeconds() >= 1 / hummingBirdSpeed) {
 				float hummingBirdMidX = midCoordinate(hummingBirdX, hummingBirdWidth);
 				float hummingBirdMidY = midCoordinate(hummingBirdY, hummingBirdHeight);
-				// call function
-				
+
 				moveHummingBirdToPoint(hummingBird, hummingBirdMidX, hummingBirdMidY , midCoordinate(honeycombCoords[currentHoneycombIndex][0], honeycombWidth), midCoordinate(honeycombCoords[currentHoneycombIndex][1], honeycombHeight), hummingBirdWidth, hummingBirdHeight, hummingBirdStepValue);
 				hummingBirdX += hummingBirdMidX - midCoordinate(hummingBirdX, hummingBirdWidth);
 				hummingBirdY += hummingBirdMidY - midCoordinate(hummingBirdY, hummingBirdHeight);
@@ -596,16 +722,9 @@ void killBees(Sprite bees[], bool beesAlive[], float beesCoords[][2], bool beesH
 				isHoneycombCreated[i] = true;
 
 				// checking if any honeycombs are overlapping with the current honeycomb. if they are, then honeycomb isn't created
-				for (int j = 0; j < beesSpawned; j++) {
-					if (isHoneycombCreated[j] && !isHoneycombDestroyed[j] && j != i) {
-						if (areColliding(honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight, honeycombCoords[j][0], honeycombCoords[j][1], honeycombWidth, honeycombHeight)) {
-							isHoneycombCreated[i] = false;
-							break;
-						}
-
-					}
+				if (staticSpritesCollision(honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight, false)) {
+					isHoneycombCreated[i] = false;
 				}
-			
 			}
 
 		}
@@ -696,57 +815,56 @@ void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovi
 	
 	
 	// looking for any collision with honeycombs
-	for (int i = 0; i < noOfHoneycombs; i++) {
-		if (honeycombCreated[i] && !honeycombDestroyed[i]){
-			bool isBeeCollidingWithHoneycomb = areColliding(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight, honeycombCoords[i][0], honeycombCoords[i][1], honeycombWidth, honeycombHeight);
-			if (isBeeCollidingWithHoneycomb) {
-				isMovingRight = !isMovingRight;
+	bool isBeeCollidingWithObstacle = staticSpritesCollision(x_coordinateAfterMovement, y_coordinate, beeWidth, beeHeight);
+	if (isBeeCollidingWithObstacle) {
+		isMovingRight = !isMovingRight;
 
 
-				int extremeX = isMovingRight ? resolutionX - beeWidth: 0;
-				int changeinX = isMovingRight? beeMovementValue: -beeMovementValue;
-				bool foundObstacle;
-				int x;
+		int extremeX = isMovingRight ? resolutionX - beeWidth: 0;
+		int changeinX = isMovingRight? beeMovementValue: -beeMovementValue;
+		bool foundObstacle;
+		int x;
 
-				// colliding with honeycomb, looking for honeycombs below to see if the bee is trapped
-				for (x = x_coordinate; extremeX? x <= extremeX: x >= 0; x += changeinX) {
-					foundObstacle = false;
-					for (int j = 0; j < noOfHoneycombs; j++) {
-						if (areColliding(x, y_coordinate + beeRowHeight, beeWidth, beeHeight, honeycombCoords[j][0], honeycombCoords[j][1], honeycombWidth, honeycombHeight)) {
-							foundObstacle = true;
-							break;
-						}
-					}
-
-					if (!foundObstacle) {
-						break;
-					}
-
+		// colliding with honeycomb, looking for honeycombs below to see if the bee is trapped
+		for (x = x_coordinate; extremeX? x <= extremeX: x >= 0; x += changeinX) {
+			foundObstacle = false;
+			for (int j = 0; j < noOfHoneycombs; j++) {
+				if (areColliding(x, y_coordinate + beeRowHeight, beeWidth, beeHeight, honeycombCoords[j][0], honeycombCoords[j][1], honeycombWidth, honeycombHeight)) {
+					foundObstacle = true;
+					break;
 				}
+			}
 
-				// if no way out is found, foundObstacle is true. If foundObstacle is true,
-				// program looks for walls
-				if (foundObstacle) {
-					bool leftWall = areColliding(x + changeinX, y_coordinate, beeWidth, beeHeight, -1000, 0, 1000, resolutionY);
-					bool rightWall = areColliding(x + changeinX, y_coordinate, beeWidth, beeHeight, resolutionX + 1, 0, 1000, resolutionY);
-					// if bee is also surrounded by wall, hive is formed
-					if (leftWall || rightWall) {
-						isBeeAlive = false;
-						isBeeHiveCreated = true;
-						
-						beeHiveX = adjustedStartingIndexDifference(x_coordinate, beeWidth, beeHiveWidth, resolutionX);
-						beeHiveY = adjustedStartingIndexDifference(y_coordinate, beeHeight, beeHiveHeight, resolutionY);
-					}
-					return;
-				}
-
-				// direction is changed regardless of be is trapped or not
-				directionChanged = true;
+			if (!foundObstacle) {
 				break;
 			}
+
 		}
+
+		// if no way out is found, foundObstacle is true. If foundObstacle is true,
+		// program looks for walls
+		if (foundObstacle) {
+			bool leftWall = areColliding(x + changeinX, y_coordinate, beeWidth, beeHeight, -1000, 0, 1000, resolutionY);
+			bool rightWall = areColliding(x + changeinX, y_coordinate, beeWidth, beeHeight, resolutionX + 1, 0, 1000, resolutionY);
+			// if bee is also surrounded by wall, hive is formed
+			if (leftWall || rightWall) {
+				isBeeAlive = false;
+				
+				beeHiveX = adjustedStartingIndexDifference(x_coordinate, beeWidth, beeHiveWidth, resolutionX);
+				beeHiveY = adjustedStartingIndexDifference(y_coordinate, beeHeight, beeHiveHeight, resolutionY);
+				staticSpritesCollision(beeHiveX, beeHiveY, beeHiveWidth, beeHiveHeight, true);
+
+				isBeeHiveCreated = true;
+			}
+			return;
+		}
+
+		// direction is changed regardless of be is trapped or not
+		directionChanged = true;
+
 	}
-	
+
+
 	if (isBeeCollidingWithRightWall && isMovingRight) {
 		directionChanged = true;
 		isMovingRight = !isMovingRight;
@@ -774,9 +892,9 @@ void moveBee(Sprite &bee, float &x_coordinate, float &y_coordinate, bool &isMovi
 	}
 
 	if (isMovingRight) {
-		bee.setTextureRect(sf::IntRect(0, 0, beeWidth, beeHeight));
-	} else {
 		bee.setTextureRect(sf::IntRect(beeWidth, 0, -beeWidth, beeHeight));
+	} else {
+		bee.setTextureRect(sf::IntRect(0, 0, beeWidth, beeHeight));
 	}
 
 
@@ -911,6 +1029,8 @@ bool moveSpriteToPoint(float &spriteX, float &spriteY, float destinationX, float
 	return false;
 }
 
+
+// when game is initialized with honeycombs or hives, this function is used
 void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoords[][2], int noOfSprites, int noOfAdditionalSprites, bool isSpriteCreated[], int spriteWidth, int spriteHeight, int groundY, int playerHeight) {
 	for (int i = 0; i < noOfSprites; i++) {
 		sprites[i].setTexture(spriteTexture);
@@ -918,18 +1038,13 @@ void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoo
 		
 		int additionalSpritesIndex = noOfSprites - noOfAdditionalSprites;
 		if (i >= additionalSpritesIndex) {
-			bool collidingWithOtherSprites = false;
+			bool collidingWithOtherSprites;
 			do {
+				// collidingWithOtherSprites = false;
 				isSpriteCreated[i] = true;
 				spriteCoords[i][0] = moveInsideScreen((rand() % resolutionX - (2 * spriteWidth)) + spriteWidth, resolutionX, spriteWidth);
 				spriteCoords[i][1] = moveInsideScreen((rand() % resolutionY - (2 * spriteHeight)) + spriteWidth, resolutionY, spriteWidth);
-
-				for (int j = additionalSpritesIndex; j < i; j++) {
-					if (areColliding(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, spriteCoords[j][0], spriteCoords[j][1], spriteWidth, spriteHeight) || spriteCoords[i][1] + spriteHeight > groundY - playerHeight) {
-						collidingWithOtherSprites = true;
-						break;
-					}
-				}
+				collidingWithOtherSprites = staticSpritesCollision(spriteCoords[i][0], spriteCoords[i][1], spriteWidth, spriteHeight, false, i);
 
 			} while (collidingWithOtherSprites);
 
