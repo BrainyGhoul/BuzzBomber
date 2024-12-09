@@ -4,6 +4,7 @@
 #include <SFML/Audio.hpp>
 #include <cstdlib>
 #include <cmath>
+#include <string>
 
 using namespace std;
 using namespace sf;
@@ -23,6 +24,9 @@ const int gameColumns = resolutionX / boxPixelsX; // Total columns on grid
 int gameGrid[gameRows][gameColumns] = {};
 
 
+int calculateHiveScore(float beeHiveCoords[][2], bool isBeeHiveCreated[], bool isBeeHiveDestroyed[], int noOfBeeHives, int beeRowHeight, int tier12Score, int tier345Score, int minTierScore);
+int calculateBeeScore(bool isHoneycombCreated[], int noOfBees, int reward);
+int calculateHoneycombScore(float beeCoords[][2], bool isHoneycombSucked[], int noOfBees, int beeRowHeight, int tier12Score, int tier345Score, int minTierScore);
 void randomCoordsOnScreen(float &x, float &y, int groundY);
 bool allTrue(bool arr[], int size);
 float moveInsideScreen(float coordinate, int extremeCoordinate, int jump);
@@ -46,7 +50,7 @@ void drawHoneycombs(RenderWindow &window, Sprite honeycombs[], float honeycombCo
 void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinated[], float beesCoords[][2], bool areBeesMovingRight[], int noOfBees, int beeHeight, int beeWidth, float flowerStartIndex[][2], bool isFlowerPollinated[], int totalFlowers, int flowerWidth, int flowerHeight, float &playerX, float &playerY, float &backgroundX, int playerWidth, int playerHeight, int groundY, int beeRowHeight);
 void drawFlowers(RenderWindow& window, Sprite flowers[], float startIndex[][2], bool isFlowerPollinated[], int totalFlowers, int groundY, int flowerHeight);
 void destroyObject(bool objectDestroyed[], float objectCoords[][2], bool objectCreated[], int noOfObjects, int objectWidth, int objectHeight, float bullet_x_coordinate, float bullet_y_coordinate, int bulletWidth, int bulletHeight, bool bulletExists);
-void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, int nectarSuckTime, int groundY);
+void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, int nectarSuckTime, int groundY);
 void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBirdX, float hummingBirdY);
 void moveHummingBirdToPoint(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, float destinationX, float destinationY, int hummingBirdWidth, int hummingBirdHeight, float stepValue);
 void drawRemainingBottles(RenderWindow &window, float startingX, float startingY, Texture bottleTexture, int remainingBottles, int bottleWidth, int bottleHeight);
@@ -55,363 +59,483 @@ void drawBeeHives(RenderWindow &window, Sprite hiveSprites[], float beeHiveCoord
 void initializeSprites(Texture &spriteTexture, Sprite sprites[], float spriteCoords[][2], int noOfSprites, int noOfAdditionalSprites, bool isSpriteCreated[], int spriteWidth, int spriteHeight, int groundY, int playerHeight);
 bool staticSpritesCollision(float spriteX, float spriteY, int spriteWidth, int spriteHeight, bool destroyCollidedObject,  int spriteIndex, bool firstCall,  int honeycombheight, int honeycombwidth,  int noofregularhoneycombs, float regularhoneycombcoords[][2],  bool regularhoneycombcreated[], bool regularhoneycombdestroyed[],  int noofredhoneycombs, float redhoneycombcoords[][2],  bool redhoneycombcreated[], bool redhoneycombdestroyed[],  int noofbeehives, float beehivecoords[][2],  bool beehivecreated[], bool beehivedestroyed[], int beehivewidth, int beehiveheight);
 bool isCollidingWithMultipleSprites(float sprite1X, float sprite1Y, int sprite1Width, int sprite1Height, float (*sprite2Coords)[2], bool *sprite2Created, bool *sprite2Destroyed, int sprite2Width, int sprite2Height, int sprite2Length, int sprite1Index, bool destroyCollidedObject);
-bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int &currentSpriteWidth, int &currentSpriteHeight, bool *&currentSpriteCreated, bool *&currentSpriteDestroyed, bool firstCall, int honeycombheight, int honeycombwidth, int noofregularhoneycombs, float regularhoneycombcoords[][2], bool regularhoneycombcreated[], bool regularhoneycombdestroyed[], int noofredhoneycombs, float redhoneycombcoords[][2], bool redhoneycombcreated[], bool redhoneycombdestroyed[], int noofbeehives, float beehivecoords[][2], bool beehivecreated[], bool beehivedestroyed[], int beehivewidth, int beehiveheight);
-
+bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int &currentSpriteWidth, int &currentSpriteHeight, bool *&currentSpriteCreated, bool *&currentSpriteDestroyed, bool *&currentSpriteSucked, bool firstCall, int honeycombheight, int honeycombwidth, int noofregularhoneycombs, float regularhoneycombcoords[][2], bool regularhoneycombcreated[], bool regularhoneycombdestroyed[], bool regularhoneycombsucked[], int noofredhoneycombs, float redhoneycombcoords[][2], bool redhoneycombcreated[], bool redhoneycombdestroyed[], bool redhoneycombsucked[], int noofbeehives, float beehivecoords[][2], bool beehivecreated[], bool beehivedestroyed[], int beehivewidth, int beehiveheight);
+void displayScore(RenderWindow &window, Text &text, int score);
 
 int main()
 {	
+
 	const int TOTAL_LEVELS = 3;
 	int level = 0;
-	// levels
-	const int LEVEL_REGULAR[TOTAL_LEVELS] = {1, 15, 20};
-	const int LEVEL_FAST[TOTAL_LEVELS] = {1, 5, 10};
-
-	const int LEVEL_HONEYCOMB[TOTAL_LEVELS] = {1, 9, 15};
-	const int LEVEL_BEEHIVES[TOTAL_LEVELS] = {1, 2, 3};
-
-	const float LEVEL_REGULAR_DELAY[TOTAL_LEVELS] = {1, 2, 3};
-	const float LEVEL_FAST_DELAY[TOTAL_LEVELS] = {2, 5, 6};
-	const float LEVEL_REGULAR_OFFSET[TOTAL_LEVELS] = {1, 9, 8};
-	const float LEVEL_FAST_OFFSET[TOTAL_LEVELS] = {4, 6, 3};
-
-	// speeds. this speed is number of boxPixels per second
-	const float regularSpeed = 15;
-	const float fastSpeed = 20;
-	const float hummingBirdSpeed = 4;
-
-	// other settings and variables
-	int groundY = (gameRows - 2) * boxPixelsY;
-	int playerMovementValue = boxPixelsX;
-	int regularBeeMovementValue = 10;
-	int fastBeeMovementValue = 20;
-	int beeRowHeight = boxPixelsY * 2;
-	int hummingBirdHealingTime = 5;
-	int hummingBirdStepValue = boxPixelsX;
-	int nectarSuckTime = 5;
-
-	srand(time(0));
-
-	// Declaring RenderWindow.
-	RenderWindow window(VideoMode(resolutionX, resolutionY), "Buzz Bombers", Style::Close | Style::Titlebar);
-
-	// Used to position your window on every launch. Use according to your needs.
-	window.setPosition(Vector2i(500, 200));
-
-	// Initializing Background Music.
-	Music bgMusic;
-	if (!bgMusic.openFromFile("Music/Music3.ogg")) {
-    cout << "Error: Could not load music file!" << endl;
-	}
-	bgMusic.setVolume(50);
-	bgMusic.setLoop(true);
-	bgMusic.play();
-
-	// Initializing Player and Player Sprites.
-	float player_x = (gameRows / 2) * boxPixelsX;
-	// 2 * boxPixels becuase the can is 64 pixels in height
-	float player_y = groundY - 2 * (boxPixelsY);
-
-
-	int playerWidth = 2 * boxPixelsX;
-	int playerHeight = 2 * boxPixelsY;
-	int initialSprayCans = 3;
-	int spraysPerSprayCan = 56;
-	int changeCanStateAfterSprays = 8;
-
-
-	int spraysCansLeft = initialSprayCans - 1;
-	int spraysLeft = spraysPerSprayCan;
-	
-	Texture playerTexture;
-	Sprite playerSprite;
-	playerTexture.loadFromFile("Textures/spray.png");
-	playerSprite.setTexture(playerTexture);
-
-
-	int playerHollowX = 21;
-	int playerHollowY = 30;
-
-
-	float playerBackgroundX = player_x + playerHollowX;
-	float playerBackgroundY = player_y + playerHollowY;
-	int playerBackgroundOffsetX = 0;
-	int playerBackgroundOffsetY = 0;
-	int playerBackgroundWidth = 21;
-	int playerBackgroundHeight = 33;
-	int playerBackgroundLevelHeight = playerBackgroundHeight / (spraysPerSprayCan / changeCanStateAfterSprays);
-
-	// the white rectangle behind player
-	Texture playerBackgroundTexture;
-	Sprite playerBackground;
-	playerBackgroundTexture.loadFromFile("Textures/playerBackground.jpg");
-	playerBackground.setTexture(playerBackgroundTexture);
-	playerBackground.setPosition(playerBackgroundX, playerBackgroundY);
-	// playerBackground.setFillColor(Color::White);
-
-
-
+	bool gameOver = false;
+	int score = 0;
+	for (level = 0; level < TOTAL_LEVELS; level++) {
+
+		// levels
+		const int LEVEL_REGULAR[TOTAL_LEVELS] = {20, 15, 20};
+		const int LEVEL_FAST[TOTAL_LEVELS] = {0, 5, 10};
+
+		const int LEVEL_HONEYCOMB[TOTAL_LEVELS] = {3, 9, 15};
+		const int LEVEL_BEEHIVES[TOTAL_LEVELS] = {0, 0, 0};
+
+		const float LEVEL_REGULAR_DELAY[TOTAL_LEVELS] = {10, 6, 3};
+		const float LEVEL_FAST_DELAY[TOTAL_LEVELS] = {0, 10, 6};
+		const float LEVEL_REGULAR_OFFSET[TOTAL_LEVELS] = {1, 3, 2};
+		const float LEVEL_FAST_OFFSET[TOTAL_LEVELS] = {4, 6, 3};
+
+		// speeds. this speed is number of boxPixels per second
+		const float regularSpeed = 20;
+		const float fastSpeed = 35;
+		const float hummingBirdSpeed = 30;
+
+		// other settings and variables
+		int groundY = (gameRows - 2) * boxPixelsY;
+		int playerMovementValue = boxPixelsX;
+		int regularBeeMovementValue = 10;
+		int fastBeeMovementValue = 20;
+		int beeRowHeight = boxPixelsY * 2;
+		int hummingBirdHealingTime = 5;
+		int hummingBirdStepValue = 10;
+		int nectarSuckTime = 5;
+
+		srand(time(0));
+
+		// Declaring RenderWindow.
+		RenderWindow window(VideoMode(resolutionX, resolutionY), "Buzz Bombers", Style::Close | Style::Titlebar);
+
+		// Used to position your window on every launch. Use according to your needs.
+		window.setPosition(Vector2i(500, 200));
+
+		// Initializing Background Music.
+		Music bgMusic;
+		if (!bgMusic.openFromFile("Music/Music3.ogg")) {
+		cout << "Error: Could not load music file!" << endl;
+		}
+		bgMusic.setVolume(50);
+		bgMusic.setLoop(true);
+		bgMusic.play();
+
+		// Initializing Player and Player Sprites.
+		float player_x = (gameRows / 2) * boxPixelsX;
+		// 2 * boxPixels becuase the can is 64 pixels in height
+		float player_y = groundY - 2 * (boxPixelsY);
+
+
+		int playerWidth = 2 * boxPixelsX;
+		int playerHeight = 2 * boxPixelsY;
+		int initialSprayCans = 3;
+		int spraysPerSprayCan = 56;
+		int changeCanStateAfterSprays = 8;
+
+
+		int spraysCansLeft = initialSprayCans - 1;
+		int spraysLeft = spraysPerSprayCan;
+		
+		Texture playerTexture;
+		Sprite playerSprite;
+		playerTexture.loadFromFile("Textures/spray.png");
+		playerSprite.setTexture(playerTexture);
+
+
+		int playerHollowX = 21;
+		int playerHollowY = 30;
+
+
+		float playerBackgroundX = player_x + playerHollowX;
+		float playerBackgroundY = player_y + playerHollowY;
+		int playerBackgroundOffsetX = 0;
+		int playerBackgroundOffsetY = 0;
+		int playerBackgroundWidth = 21;
+		int playerBackgroundHeight = 33;
+		int playerBackgroundLevelHeight = playerBackgroundHeight / (spraysPerSprayCan / changeCanStateAfterSprays);
+
+		// the white rectangle behind player
+		Texture playerBackgroundTexture;
+		Sprite playerBackground;
+		playerBackgroundTexture.loadFromFile("Textures/playerBackground.jpg");
+		playerBackground.setTexture(playerBackgroundTexture);
+		playerBackground.setPosition(playerBackgroundX, playerBackgroundY);
+		// playerBackground.setFillColor(Color::White);
+
+
+
+
+		float bullet_x = player_x;
+		float bullet_y = player_y;
+		int bulletWidth = 16;
+		int bulletHeight = 16;
+		bool bullet_exists = false;
+
+		Clock bulletClock;
+		Texture bulletTexture;
+		Sprite bulletSprite;
+
+		bulletTexture.loadFromFile("Textures/bullet.png");
+		bulletSprite.setTexture(bulletTexture);
+		bulletSprite.setScale(3, 3);
+		bulletSprite.setTextureRect(sf::IntRect(0, 0, boxPixelsX, boxPixelsY));
 
-	float bullet_x = player_x;
-	float bullet_y = player_y;
-	int bulletWidth = 16;
-	int bulletHeight = 16;
-	bool bullet_exists = false;
-
-	Clock bulletClock;
-	Texture bulletTexture;
-	Sprite bulletSprite;
-
-	bulletTexture.loadFromFile("Textures/bullet.png");
-	bulletSprite.setTexture(bulletTexture);
-	bulletSprite.setScale(3, 3);
-	bulletSprite.setTextureRect(sf::IntRect(0, 0, boxPixelsX, boxPixelsY));
+		// The ground on which player moves
+		RectangleShape groundRectangle(Vector2f(resolutionX, boxPixelsY * 2));
+		groundRectangle.setPosition(0, groundY);
+		groundRectangle.setFillColor(Color::Green);
+
+
+		// bees
+		int regularBeeWidth = 46;
+		int regularBeeHeight = 22;
+		int regularBeesSpawned = 0;
+		Clock timesinceLastRegularSpawn;
+
+		Texture regularBeeTexture;
+		Clock regularBeesClock[LEVEL_REGULAR[level]];
+		Sprite regularBees[LEVEL_REGULAR[level]];
+		// column 0: x coordinate, column 1: y coordinate
+		float regularBeesCoords[LEVEL_REGULAR[level]][2] = {};
+		bool areRegularMovingRight[LEVEL_REGULAR[level]] = {};
+		bool regularBeesAlive[LEVEL_REGULAR[level]] = {};
+		bool regularBeesHavePollinated[LEVEL_REGULAR[level]] = {};
+		bool regularIsWaiting[LEVEL_REGULAR[level]] = {};
+		Clock regularWaitingTimer[LEVEL_REGULAR[level]];
+		int regularWaitingTime[LEVEL_REGULAR[level]];
 
-	// The ground on which player moves
-	RectangleShape groundRectangle(Vector2f(resolutionX, boxPixelsY * 2));
-	groundRectangle.setPosition(0, groundY);
-	groundRectangle.setFillColor(Color::Green);
 
+		regularBeeTexture.loadFromFile("Textures/Regular_bee.png");
+		for (int i = 0; i < LEVEL_REGULAR[level]; i++) {
+			regularBees[i].setTexture(regularBeeTexture);
+			regularBees[i].setTextureRect(sf::IntRect(0, 0, regularBeeWidth, regularBeeHeight));
+		}
+
+		
+
+		// fast bees
+		int fastBeeWidth = 46;
+		int fastBeeHeight = 22;
+		int fastBeesSpawned = 0;
+
+		Clock timesinceLastFastSpawn;
+
+
+		Texture fastBeeTexture;
+		Clock fastBeesClock[LEVEL_FAST[level]];
+		Sprite fastBees[LEVEL_FAST[level]];
+		// column 0: x coordinate, column 1: y coordinate
+		float fastBeesCoords[LEVEL_FAST[level]][2] = {};
+		bool areFastMovingRight[LEVEL_FAST[level]] = {};
+		bool fastBeesAlive[LEVEL_FAST[level]] = {};
+		bool fastBeesHavePollinated[LEVEL_FAST[level]] = {};
+
+		fastBeeTexture.loadFromFile("Textures/Fast_bee.png");
+		for (int i = 0; i < LEVEL_FAST[level]; i++) {
+			fastBees[i].setTexture(fastBeeTexture);
+			fastBees[i].setTextureRect(sf::IntRect(0, 0, fastBeeWidth, fastBeeHeight));
+		}
+		
+
+		// honeycombs
+		int honeycombHeight = 64;
+		int honeycombWidth = 64;
+		int noOfRegularHoneycombs = LEVEL_REGULAR[level] + LEVEL_HONEYCOMB[level];
+
+		Texture regularHoneycombTexture;
+		Sprite regularHoneycombSprites[noOfRegularHoneycombs];
 
-	// bees
-	int regularBeeWidth = 46;
-	int regularBeeHeight = 22;
-	int regularBeesSpawned = 0;
-	Clock timesinceLastRegularSpawn;
+		bool isRegularHoneycombCreated[noOfRegularHoneycombs] = {};
+		bool areRegularHoneycombsDestroyed[noOfRegularHoneycombs] = {};
+		float regularHoneycombCoords[noOfRegularHoneycombs][2] = {};
+		bool isRegularHoneycombSucked[LEVEL_FAST[level]] = {};
+
+		regularHoneycombTexture.loadFromFile("Textures/honeycomb.png");
 
-	Texture regularBeeTexture;
-	Clock regularBeesClock[LEVEL_REGULAR[level]];
-	Sprite regularBees[LEVEL_REGULAR[level]];
-	// column 0: x coordinate, column 1: y coordinate
-	float regularBeesCoords[LEVEL_REGULAR[level]][2] = {};
-	bool areRegularMovingRight[LEVEL_REGULAR[level]] = {};
-	bool regularBeesAlive[LEVEL_REGULAR[level]] = {};
-	bool regularBeesHavePollinated[LEVEL_REGULAR[level]] = {};
-	bool regularIsWaiting[LEVEL_REGULAR[level]] = {};
-	Clock regularWaitingTimer[LEVEL_REGULAR[level]];
-	int regularWaitingTime[LEVEL_REGULAR[level]];
 
-
-	regularBeeTexture.loadFromFile("Textures/Regular_bee.png");
-	for (int i = 0; i < LEVEL_REGULAR[level]; i++) {
-		regularBees[i].setTexture(regularBeeTexture);
-		regularBees[i].setTextureRect(sf::IntRect(0, 0, regularBeeWidth, regularBeeHeight));
-	}
-
-	
-
-	// fast bees
-	int fastBeeWidth = 46;
-	int fastBeeHeight = 22;
-	int fastBeesSpawned = 0;
-
-	Clock timesinceLastFastSpawn;
-
-
-	Texture fastBeeTexture;
-	Clock fastBeesClock[LEVEL_FAST[level]];
-	Sprite fastBees[LEVEL_FAST[level]];
-	// column 0: x coordinate, column 1: y coordinate
-	float fastBeesCoords[LEVEL_FAST[level]][2] = {};
-	bool areFastMovingRight[LEVEL_FAST[level]] = {};
-	bool fastBeesAlive[LEVEL_FAST[level]] = {};
-	bool fastBeesHavePollinated[LEVEL_FAST[level]] = {};
-
-	fastBeeTexture.loadFromFile("Textures/Fast_bee.png");
-	for (int i = 0; i < LEVEL_FAST[level]; i++) {
-		fastBees[i].setTexture(fastBeeTexture);
-		fastBees[i].setTextureRect(sf::IntRect(0, 0, fastBeeWidth, fastBeeHeight));
-	}
-	
-
-	// honeycombs
-	int honeycombHeight = 64;
-	int honeycombWidth = 64;
-	int noOfRegularHoneycombs = LEVEL_REGULAR[level] + LEVEL_HONEYCOMB[level];
-
-	Texture regularHoneycombTexture;
-	Sprite regularHoneycombSprites[noOfRegularHoneycombs];
-
-	bool isRegularHoneycombCreated[noOfRegularHoneycombs] = {};
-	bool areRegularHoneycombsDestroyed[noOfRegularHoneycombs] = {};
-	float regularHoneycombCoords[noOfRegularHoneycombs][2] = {};
-
-	regularHoneycombTexture.loadFromFile("Textures/honeycomb.png");
-
-
-
-	int noOfRedHoneycombs = LEVEL_REGULAR[level];
-	Texture redHoneycombTexture;
-	Sprite redHoneycombSprites[noOfRegularHoneycombs];
-
-	bool isRedHoneycombCreated[noOfRegularHoneycombs] = {};
-	bool areRedHoneycombsDestroyed[noOfRegularHoneycombs] = {};
-	float redHoneycombCoords[noOfRegularHoneycombs][2] = {};
-
-	redHoneycombTexture.loadFromFile("Textures/honeycomb_red.png");
-
-
-
-	// flowers
-	int flowerWidth = 16;
-	while (resolutionX % flowerWidth) {
-		flowerWidth--;
-	}
-	int flowerHeight = 29;
-	int totalFlowers = resolutionX / flowerWidth;
-
-	Texture flowerTexture;
-	Sprite flowerSprites[totalFlowers];
-	bool isFlowerPollinated[totalFlowers] = {};
-
-	float flowerStartIndex[totalFlowers][2];
-	for (int i = 0; i < totalFlowers; i++) {
-		// adding i because the next flower starts with the next index
-		flowerStartIndex[i][0] = (i * flowerWidth);
-		flowerStartIndex[i][1] = groundY - flowerHeight;
-	}
-
-
-	flowerTexture.loadFromFile("Textures/obstacles.png");
-	for (int i = 0; i < totalFlowers; i++) {
-		flowerSprites[i].setTexture(flowerTexture);
-		flowerSprites[i].setTextureRect(sf::IntRect(0, 0, flowerWidth, flowerHeight));
-	}
-
-
-	// humming bird
-	int hummingBirdWidth = 32;
-	int hummingBirdHeight = 32;
-	// fix this. need to use the difference index thing
-	float hummingBirdRestX = resolutionX - hummingBirdWidth - 50;
-	float hummingBirdRestY = 50;
-
-
-	Texture hummingBirdTexture;
-	Sprite hummingBirdSprite;
-	bool isHummingBirdSick = false;
-	bool isHummingBirdSuckingNectar = false;
-	float hummingBirdX;
-	float hummingBirdY;
-	randomCoordsOnScreen(hummingBirdX, hummingBirdY, groundY);
-	int regularHoneycombsSucked = 0;
-
-	hummingBirdTexture.loadFromFile("Textures/bird.png");
-	hummingBirdSprite.setTexture(hummingBirdTexture);
-	hummingBirdSprite.setTextureRect(sf::IntRect(hummingBirdWidth, 0, hummingBirdWidth, hummingBirdHeight));
-	hummingBirdSprite.setColor(Color::Blue);
-
-
-	// bee hives
-	int beeHiveWidth = 64;
-	int beeHiveHeight = 64;
-	
-	int noOfBeeHives = LEVEL_REGULAR[level] + LEVEL_BEEHIVES[level];
-
-	Texture beeHiveTexture;
-	Sprite beeHives[noOfBeeHives];
-	bool areBeeHivesCreated[noOfBeeHives] = {};
-	bool areBeeHivesDestroyed[noOfBeeHives] = {};
-	float beeHiveCoords[noOfBeeHives][2];
-
-	beeHiveTexture.loadFromFile("Textures/hive.png");
-
-	// giving initial state to the function
-	staticSpritesCollision(0, 0 , 0, 0, false, 0, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
-	float a, b;
-	int c, d;
-	bool *e, *f;
-	findSpriteForHummingBird(a, b, c, d, e, f, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
-
-
-	initializeSprites(beeHiveTexture, beeHives, beeHiveCoords, noOfBeeHives, LEVEL_BEEHIVES[level], areBeeHivesCreated, beeHiveWidth, beeHiveHeight, groundY, playerHeight);
-	initializeSprites(redHoneycombTexture, redHoneycombSprites, redHoneycombCoords, noOfRedHoneycombs, 0, isRedHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
-	initializeSprites(regularHoneycombTexture, regularHoneycombSprites, regularHoneycombCoords, noOfRegularHoneycombs, LEVEL_HONEYCOMB[level], isRegularHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
-	while (window.isOpen()) {
-
-		Event e;
-		while (window.pollEvent(e)) {
-			if (e.type == Event::Closed) {
-				return 0;
+
+		int noOfRedHoneycombs = LEVEL_REGULAR[level];
+		Texture redHoneycombTexture;
+		Sprite redHoneycombSprites[noOfRedHoneycombs];
+
+		bool isRedHoneycombCreated[noOfRedHoneycombs] = {};
+		bool areRedHoneycombsDestroyed[noOfRedHoneycombs] = {};
+		float redHoneycombCoords[noOfRedHoneycombs][2] = {};
+		bool isRedHoneycombSucked[noOfRedHoneycombs] = {};
+
+		redHoneycombTexture.loadFromFile("Textures/honeycomb_red.png");
+
+
+
+		// flowers
+		int flowerWidth = 16;
+		while (resolutionX % flowerWidth) {
+			flowerWidth--;
+		}
+		int flowerHeight = 29;
+		int totalFlowers = resolutionX / flowerWidth;
+
+		Texture flowerTexture;
+		Sprite flowerSprites[totalFlowers];
+		bool isFlowerPollinated[totalFlowers] = {};
+
+		float flowerStartIndex[totalFlowers][2];
+		for (int i = 0; i < totalFlowers; i++) {
+			// adding i because the next flower starts with the next index
+			flowerStartIndex[i][0] = (i * flowerWidth);
+			flowerStartIndex[i][1] = groundY - flowerHeight;
+		}
+
+
+		flowerTexture.loadFromFile("Textures/obstacles.png");
+		for (int i = 0; i < totalFlowers; i++) {
+			flowerSprites[i].setTexture(flowerTexture);
+			flowerSprites[i].setTextureRect(sf::IntRect(0, 0, flowerWidth, flowerHeight));
+		}
+
+
+		// humming bird
+		int hummingBirdWidth = 32;
+		int hummingBirdHeight = 32;
+		// fix this. need to use the difference index thing
+		float hummingBirdRestX = resolutionX - hummingBirdWidth - 50;
+		float hummingBirdRestY = 50;
+
+
+		Texture hummingBirdTexture;
+		Sprite hummingBirdSprite;
+		bool isHummingBirdSick = false;
+		bool isHummingBirdSuckingNectar = false;
+		float hummingBirdX;
+		float hummingBirdY;
+		randomCoordsOnScreen(hummingBirdX, hummingBirdY, groundY);
+
+		hummingBirdTexture.loadFromFile("Textures/bird.png");
+		hummingBirdSprite.setTexture(hummingBirdTexture);
+		hummingBirdSprite.setTextureRect(sf::IntRect(hummingBirdWidth, 0, hummingBirdWidth, hummingBirdHeight));
+		hummingBirdSprite.setColor(Color::Blue);
+
+
+		// bee hives
+		int beeHiveWidth = 64;
+		int beeHiveHeight = 64;
+		
+		int noOfBeeHives = LEVEL_REGULAR[level] + LEVEL_BEEHIVES[level];
+
+		Texture beeHiveTexture;
+		Sprite beeHives[noOfBeeHives];
+		bool areBeeHivesCreated[noOfBeeHives] = {};
+		bool areBeeHivesDestroyed[noOfBeeHives] = {};
+		float beeHiveCoords[noOfBeeHives][2];
+
+		beeHiveTexture.loadFromFile("Textures/hive.png");
+
+
+		// score
+		Text scoreText; 
+		Font font;   
+		font.loadFromFile("Textures/arial.ttf");  
+		scoreText.setFont(font);        
+		scoreText.setCharacterSize(30);
+		scoreText.setFillColor(Color::White);
+		scoreText.setStyle(Text::Bold);
+		scoreText.setPosition(resolutionX - 300, resolutionY - 70);
+
+
+
+		// giving initial state to the function
+		staticSpritesCollision(0, 0 , 0, 0, false, 0, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
+		float a, b;
+		int c, d;
+		bool *e, *f, *g;
+		findSpriteForHummingBird(a, b, c, d, e, f, g, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, regularHoneycombCoords, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, isRegularHoneycombSucked, noOfRedHoneycombs, redHoneycombCoords, isRedHoneycombCreated, areRedHoneycombsDestroyed, isRedHoneycombSucked, noOfBeeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, beeHiveWidth, beeHiveHeight);
+
+
+		initializeSprites(beeHiveTexture, beeHives, beeHiveCoords, noOfBeeHives, LEVEL_BEEHIVES[level], areBeeHivesCreated, beeHiveWidth, beeHiveHeight, groundY, playerHeight);
+		initializeSprites(redHoneycombTexture, redHoneycombSprites, redHoneycombCoords, noOfRedHoneycombs, 0, isRedHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
+		initializeSprites(regularHoneycombTexture, regularHoneycombSprites, regularHoneycombCoords, noOfRegularHoneycombs, LEVEL_HONEYCOMB[level], isRegularHoneycombCreated, honeycombWidth, honeycombHeight, groundY, playerHeight);
+		
+		
+		
+		while (window.isOpen()) {
+
+			int newScore = 0;
+
+			newScore += calculateHoneycombScore(regularHoneycombCoords, isRegularHoneycombSucked, noOfRegularHoneycombs, beeRowHeight, 1000, 800, 500);
+			newScore += calculateHoneycombScore(redHoneycombCoords, isRedHoneycombSucked, noOfRedHoneycombs, beeRowHeight, 2000, 1800, 1500);
+			newScore += calculateBeeScore(isRegularHoneycombCreated, LEVEL_REGULAR[level], 100);
+			newScore += calculateBeeScore(isRedHoneycombCreated, LEVEL_FAST[level], 1000);
+
+			if (score != newScore) {
+				if ((newScore >= 20000 && score < 20000)) {
+					spraysCansLeft ++;
+				}
+				if ((newScore >= 40000 && score < 40000)) {
+					spraysCansLeft ++;
+				}
+				if ((score / 80000 != newScore / 80000)) {
+					spraysCansLeft ++;
+				}
 			}
-			else if (e.type == Event::KeyPressed) {
-				// movement of the spray can
-				float playerPreviousX = player_x;
-				if (e.key.code == sf::Keyboard::Right || e.key.code == sf::Keyboard::Left) {
-					bool isRight = true;
-					if (e.key.code == sf::Keyboard::Left) {
-						isRight = false;
-					}
-					player_x = movePlayer(player_x, playerWidth, playerMovementValue, isRight, flowerStartIndex, isFlowerPollinated, flowerWidth, totalFlowers);
+			score = newScore;
 
-				// shoot spray
-				} else if (e.key.code == sf::Keyboard::Space) {
-					if (!bullet_exists) {
-						spraysLeft--;
+			Event e;
+			while (window.pollEvent(e)) {
+				if (e.type == Event::Closed) {
+					return 0;
+				}
+				else if (e.type == Event::KeyPressed) {
+					// movement of the spray can
+					float playerPreviousX = player_x;
+					if (e.key.code == sf::Keyboard::Right || e.key.code == sf::Keyboard::Left) {
+						bool isRight = true;
+						if (e.key.code == sf::Keyboard::Left) {
+							isRight = false;
+						}
+						player_x = movePlayer(player_x, playerWidth, playerMovementValue, isRight, flowerStartIndex, isFlowerPollinated, flowerWidth, totalFlowers);
 
-						if (!((spraysPerSprayCan - spraysLeft) % changeCanStateAfterSprays)) {
-							playerBackgroundOffsetY += playerBackgroundLevelHeight;
+					// shoot spray
+					} else if (e.key.code == sf::Keyboard::Space) {
+						if (!bullet_exists) {
+							spraysLeft--;
+
+							if (!((spraysPerSprayCan - spraysLeft) % changeCanStateAfterSprays)) {
+								playerBackgroundOffsetY += playerBackgroundLevelHeight;
+							}
+						}
+
+						bullet_exists = true;
+
+						if (!spraysLeft) {
+							spraysCansLeft--;
+							spraysLeft = spraysPerSprayCan;
+							playerBackgroundOffsetY = 0;
 						}
 					}
 
-					bullet_exists = true;
-
-					if (!spraysLeft) {
-						spraysCansLeft--;
-						spraysLeft = spraysPerSprayCan;
-						playerBackgroundOffsetY = 0;
-					}
-					if (spraysCansLeft < 0) {
-						// game over
-					}
+					playerBackgroundX += player_x - playerPreviousX;
 				}
+			}
 
-				playerBackgroundX += player_x - playerPreviousX;
+
+
+
+			if (bullet_exists == true)
+			{
+				moveBullet(bullet_y, bullet_exists, bulletClock);
+				drawBullet(window, bullet_x, bullet_y, bulletSprite);
+			}
+			else
+			{
+				bullet_x = player_x;
+				bullet_y = player_y;
+			}
+
+			bool allFlowersPollinated = true;
+			for (int i = 0; i < totalFlowers; i++) {
+				if (!isFlowerPollinated[i]) {
+					allFlowersPollinated = false;
+					break;
+				}
+			}
+
+			if (allFlowersPollinated) {
+				for (int i = 0; i < totalFlowers; i++) {
+					isFlowerPollinated[i] = false;
+				}
+				spraysCansLeft --;
+			}
+
+
+			window.draw(groundRectangle);
+			// displayScore(window, scoreText, score);
+			scoreText.setString(to_string(score));
+			window.draw(scoreText);
+
+			manageHummingBird(hummingBirdSprite, hummingBirdX, hummingBirdY, hummingBirdWidth, hummingBirdHeight, hummingBirdStepValue, isHummingBirdSick, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, hummingBirdHealingTime, hummingBirdSpeed, nectarSuckTime, groundY);
+			spawnBees(regularBees, regularBeesCoords, regularBeesClock, regularBeesAlive, areRegularMovingRight, regularBeesSpawned, LEVEL_REGULAR[level], LEVEL_REGULAR_DELAY[level], LEVEL_REGULAR_OFFSET[level], regularBeeWidth, regularBeeHeight, timesinceLastRegularSpawn);
+			spawnBees(fastBees, fastBeesCoords, fastBeesClock, fastBeesAlive, areFastMovingRight, fastBeesSpawned, LEVEL_FAST[level], LEVEL_FAST_DELAY[level], LEVEL_FAST_OFFSET[level], fastBeeWidth, fastBeeWidth, timesinceLastFastSpawn);
+			moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeesHavePollinated, isRegularHoneycombCreated, regularHoneycombCoords, areRegularHoneycombsDestroyed, areBeeHivesCreated, beeHiveCoords, regularBeeMovementValue, regularSpeed, regularBeeHeight, regularBeeWidth, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, player_x, player_y, playerWidth, playerHeight, beeHiveWidth, beeHiveHeight, beeRowHeight, groundY, regularIsWaiting, regularWaitingTimer, regularWaitingTime);
+			moveBees(fastBees, fastBeesSpawned, fastBeesCoords, areFastMovingRight, fastBeesClock, fastBeesAlive, fastBeesHavePollinated, isRedHoneycombCreated, redHoneycombCoords, areRedHoneycombsDestroyed, areBeeHivesCreated, beeHiveCoords, fastBeeMovementValue, fastSpeed, fastBeeHeight, fastBeeWidth, false, honeycombHeight, honeycombWidth, noOfRedHoneycombs, player_x, player_y, playerWidth, playerHeight, beeHiveWidth, beeHiveHeight, beeRowHeight, groundY);
+			killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeesHavePollinated, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, regularHoneycombCoords, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
+			killBees(fastBees, fastBeesAlive, fastBeesCoords, fastBeesHavePollinated, isRedHoneycombCreated, areRedHoneycombsDestroyed, redHoneycombCoords, fastBeesSpawned, fastBeeWidth, fastBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
+			destroyObject(areRegularHoneycombsDestroyed, regularHoneycombCoords, isRegularHoneycombCreated, noOfRegularHoneycombs, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
+			destroyObject(areRedHoneycombsDestroyed, redHoneycombCoords, isRedHoneycombCreated, noOfRedHoneycombs, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
+			destroyObject(areBeeHivesDestroyed, beeHiveCoords, areBeeHivesCreated, noOfBeeHives, beeHiveWidth, beeHiveHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
+			beePollinatesGround(regularBees, regularBeesAlive, regularBeesHavePollinated, regularBeesCoords, areRegularMovingRight, regularBeesSpawned, regularBeeHeight, regularBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, player_x, player_y, playerBackgroundX, playerWidth, playerHeight, groundY, beeRowHeight);
+			beePollinatesGround(fastBees, fastBeesAlive, fastBeesHavePollinated, fastBeesCoords, areFastMovingRight, fastBeesSpawned, fastBeeHeight, fastBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, player_x, player_y, playerBackgroundX, playerWidth, playerHeight, groundY, beeRowHeight);
+
+
+			drawFlowers(window, flowerSprites, flowerStartIndex, isFlowerPollinated, totalFlowers, groundY, flowerHeight);
+			drawHoneycombs(window, regularHoneycombSprites, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRegularHoneycombsDestroyed, noOfRegularHoneycombs, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
+			drawHoneycombs(window, redHoneycombSprites, redHoneycombCoords, isRedHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRedHoneycombsDestroyed, noOfRedHoneycombs, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
+			drawBeeHives(window, beeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, noOfBeeHives);
+			drawHummingBird(window, hummingBirdSprite, hummingBirdX, hummingBirdY);
+			drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords, regularBeesAlive);
+			drawBees(window, fastBeesSpawned, fastBees, fastBeesCoords, fastBeesAlive);
+			drawPlayer(window, player_x, player_y, playerSprite, playerBackgroundX, playerBackgroundY, playerBackgroundOffsetX, playerBackgroundOffsetY, playerBackgroundWidth, playerBackgroundHeight, playerBackground);
+			drawRemainingBottles(window, 0, groundY, playerTexture, spraysCansLeft, playerWidth, playerHeight);
+		
+		
+			window.display();
+			window.clear();
+
+		}
+	}
+}
+
+
+
+
+void displayScore(RenderWindow &window, Text &text, int score) {
+}
+int calculateHiveScore(float beeHiveCoords[][2], bool isBeeHiveCreated[], bool isBeeHiveDestroyed[], int noOfBeeHives, int beeRowHeight, int tier12Score, int tier345Score, int minTierScore) {
+	int score = 0;
+
+	for (int i = 0; i < noOfBeeHives; i++) {
+		if (isBeeHiveCreated[i] && !isBeeHiveDestroyed[i]) {
+			int tier = midCoordinate(beeHiveCoords[i][1], beeRowHeight) / beeRowHeight;
+
+			if (tier < 2) {
+				score += tier12Score;
+			} else if (tier < 5) {
+				score += tier345Score;
+			} else {
+				score += minTierScore;
 			}
 		}
-
-
-
-
-		if (bullet_exists == true)
-		{
-			moveBullet(bullet_y, bullet_exists, bulletClock);
-			drawBullet(window, bullet_x, bullet_y, bulletSprite);
-		}
-		else
-		{
-			bullet_x = player_x;
-			bullet_y = player_y;
-		}
-		window.draw(groundRectangle);
-
-
-		manageHummingBird(hummingBirdSprite, hummingBirdX, hummingBirdY, hummingBirdWidth, hummingBirdHeight, hummingBirdStepValue, isHummingBirdSick, regularHoneycombsSucked, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, hummingBirdHealingTime, hummingBirdSpeed, nectarSuckTime, groundY);
-		spawnBees(regularBees, regularBeesCoords, regularBeesClock, regularBeesAlive, areRegularMovingRight, regularBeesSpawned, LEVEL_REGULAR[level], LEVEL_REGULAR_DELAY[level], LEVEL_REGULAR_OFFSET[level], regularBeeWidth, regularBeeHeight, timesinceLastRegularSpawn);
-		spawnBees(fastBees, fastBeesCoords, fastBeesClock, fastBeesAlive, areFastMovingRight, fastBeesSpawned, LEVEL_FAST[level], LEVEL_FAST_DELAY[level], LEVEL_FAST_OFFSET[level], fastBeeWidth, fastBeeWidth, timesinceLastFastSpawn);
-		moveBees(regularBees, regularBeesSpawned, regularBeesCoords, areRegularMovingRight, regularBeesClock, regularBeesAlive, regularBeesHavePollinated, isRegularHoneycombCreated, regularHoneycombCoords, areRegularHoneycombsDestroyed, areBeeHivesCreated, beeHiveCoords, regularBeeMovementValue, regularSpeed, regularBeeHeight, regularBeeWidth, true, honeycombHeight, honeycombWidth, noOfRegularHoneycombs, player_x, player_y, playerWidth, playerHeight, beeHiveWidth, beeHiveHeight, beeRowHeight, groundY, regularIsWaiting, regularWaitingTimer, regularWaitingTime);
-		moveBees(fastBees, fastBeesSpawned, fastBeesCoords, areFastMovingRight, fastBeesClock, fastBeesAlive, fastBeesHavePollinated, isRedHoneycombCreated, redHoneycombCoords, areRedHoneycombsDestroyed, areBeeHivesCreated, beeHiveCoords, fastBeeMovementValue, fastSpeed, fastBeeHeight, fastBeeWidth, false, honeycombHeight, honeycombWidth, noOfRedHoneycombs, player_x, player_y, playerWidth, playerHeight, beeHiveWidth, beeHiveHeight, beeRowHeight, groundY);
-		killBees(regularBees, regularBeesAlive, regularBeesCoords, regularBeesHavePollinated, isRegularHoneycombCreated, areRegularHoneycombsDestroyed, regularHoneycombCoords, regularBeesSpawned, regularBeeWidth, regularBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
-		killBees(fastBees, fastBeesAlive, fastBeesCoords, fastBeesHavePollinated, isRedHoneycombCreated, areRedHoneycombsDestroyed, redHoneycombCoords, fastBeesSpawned, fastBeeWidth, fastBeeHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists, honeycombWidth, honeycombHeight, groundY);
-		destroyObject(areRegularHoneycombsDestroyed, regularHoneycombCoords, isRegularHoneycombCreated, noOfRegularHoneycombs, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
-		destroyObject(areRedHoneycombsDestroyed, redHoneycombCoords, isRedHoneycombCreated, noOfRedHoneycombs, honeycombWidth, honeycombHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
-		destroyObject(areBeeHivesDestroyed, beeHiveCoords, areBeeHivesCreated, noOfBeeHives, beeHiveWidth, beeHiveHeight, bullet_x, bullet_y, bulletWidth, bulletHeight, bullet_exists);
-		beePollinatesGround(regularBees, regularBeesAlive, regularBeesHavePollinated, regularBeesCoords, areRegularMovingRight, regularBeesSpawned, regularBeeHeight, regularBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, player_x, player_y, playerBackgroundX, playerWidth, playerHeight, groundY, beeRowHeight);
-		beePollinatesGround(fastBees, fastBeesAlive, fastBeesHavePollinated, fastBeesCoords, areFastMovingRight, fastBeesSpawned, fastBeeHeight, fastBeeWidth, flowerStartIndex, isFlowerPollinated, totalFlowers, flowerWidth, flowerHeight, player_x, player_y, playerBackgroundX, playerWidth, playerHeight, groundY, beeRowHeight);
-
-
-		drawFlowers(window, flowerSprites, flowerStartIndex, isFlowerPollinated, totalFlowers, groundY, flowerHeight);
-		drawHoneycombs(window, regularHoneycombSprites, regularHoneycombCoords, isRegularHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRegularHoneycombsDestroyed, noOfRegularHoneycombs, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
-		drawHoneycombs(window, redHoneycombSprites, redHoneycombCoords, isRedHoneycombCreated, regularBeesHavePollinated, regularBeesCoords, areRedHoneycombsDestroyed, noOfRedHoneycombs, regularBeeHeight, regularBeeWidth, honeycombHeight, honeycombWidth);
-		drawBeeHives(window, beeHives, beeHiveCoords, areBeeHivesCreated, areBeeHivesDestroyed, noOfBeeHives);
-		drawHummingBird(window, hummingBirdSprite, hummingBirdX, hummingBirdY);
-		drawBees(window, regularBeesSpawned, regularBees, regularBeesCoords, regularBeesAlive);
-		drawBees(window, fastBeesSpawned, fastBees, fastBeesCoords, fastBeesAlive);
-		drawPlayer(window, player_x, player_y, playerSprite, playerBackgroundX, playerBackgroundY, playerBackgroundOffsetX, playerBackgroundOffsetY, playerBackgroundWidth, playerBackgroundHeight, playerBackground);
-		drawRemainingBottles(window, 0, groundY, playerTexture, spraysCansLeft, playerWidth, playerHeight);
-
-		window.display();
-		window.clear();
+		
 	}
+
+	return score;	
+}
+
+int calculateBeeScore(bool isHoneycombCreated[], int noOfBees, int reward) {
+	int score = 0;
+	for (int i = 0; i < noOfBees; i++) {
+		if (isHoneycombCreated[i]) {
+			score += reward;
+		}
+	}
+
+	return score;
+}
+
+
+int calculateHoneycombScore(float beeCoords[][2], bool isHoneycombSucked[], int noOfBees, int beeRowHeight, int tier12Score, int tier345Score, int minTierScore) {
+	int score = 0;
+
+	for (int i = 0; i < noOfBees; i++) {
+		if (isHoneycombSucked[i]) {
+			int tier = midCoordinate(beeCoords[i][1], beeRowHeight) / beeRowHeight;
+
+			if (tier < 2) {
+				score += tier12Score;
+			} else if (tier < 5) {
+				score += tier345Score;
+			} else {
+				score += minTierScore;
+			}
+		}
+		
+	}
+
+	return score;
 }
 
 
@@ -420,17 +544,19 @@ int main()
 // objects that are still e.g honeycomb and hive
 // always use before setting the created field to true
 // this function checks if any of these overlap
-bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int &currentSpriteWidth, int &currentSpriteHeight, bool *&currentSpriteCreated, bool *&currentSpriteDestroyed, bool firstCall = false, int honeycombheight = 0, int honeycombwidth = 0, int noofregularhoneycombs = 0, float regularhoneycombcoords[][2] = nullptr, bool regularhoneycombcreated[] = nullptr, bool regularhoneycombdestroyed[] = nullptr, int noofredhoneycombs = 0, float redhoneycombcoords[][2] = nullptr, bool redhoneycombcreated[] = nullptr, bool redhoneycombdestroyed[] = nullptr, int noofbeehives = 0, float beehivecoords[][2] = nullptr, bool beehivecreated[] = nullptr, bool beehivedestroyed[] = nullptr, int beehivewidth = 0, int beehiveheight = 0) {
+bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int &currentSpriteWidth, int &currentSpriteHeight, bool *&currentSpriteCreated, bool *&currentSpriteDestroyed, bool *&currentSpriteSucked, bool firstCall = false, int honeycombheight = 0, int honeycombwidth = 0, int noofregularhoneycombs = 0, float regularhoneycombcoords[][2] = nullptr, bool regularhoneycombcreated[] = nullptr, bool regularhoneycombdestroyed[] = nullptr, bool regularhoneycombsucked[] = nullptr, int noofredhoneycombs = 0, float redhoneycombcoords[][2] = nullptr, bool redhoneycombcreated[] = nullptr, bool redhoneycombdestroyed[] = nullptr, bool redhoneycombsucked[] = nullptr, int noofbeehives = 0, float beehivecoords[][2] = nullptr, bool beehivecreated[] = nullptr, bool beehivedestroyed[] = nullptr, int beehivewidth = 0, int beehiveheight = 0) {
 	static int honeycombHeight;
 	static int honeycombWidth;
 	static int noOfRegularHoneycombs;
 	static float (*regularHoneycombCoords)[2];
 	static bool *regularHoneycombCreated;
 	static bool *regularHoneycombDestroyed;
+	static bool *regularHoneycombSucked;
 	static int noOfRedHoneycombs;
 	static float (*redHoneycombCoords)[2];
 	static bool *redHoneycombCreated;
 	static bool *redHoneycombDestroyed;
+	static bool *redHoneycombSucked;
 	static int beeHiveHeight;
 	static int beeHiveWidth;
 	static int noOfBeeHives;
@@ -458,6 +584,9 @@ bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int 
 		redHoneycombDestroyed = redhoneycombdestroyed;
 		beeHiveCreated = beehivecreated;
 		beeHiveDestroyed = beehivedestroyed;
+
+		regularHoneycombSucked = regularhoneycombsucked;
+		redHoneycombSucked = redhoneycombsucked;
 		return true;
 	} else {
 		for (int i = 0; i < noOfRegularHoneycombs; i++) {
@@ -468,6 +597,7 @@ bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int 
 				currentSpriteHeight = honeycombHeight;
 				currentSpriteCreated = &regularHoneycombCreated[i];
 				currentSpriteDestroyed = &regularHoneycombDestroyed[i];
+				currentSpriteSucked = &regularHoneycombSucked[i];
 				return true;
 			}
 
@@ -481,19 +611,8 @@ bool findSpriteForHummingBird(float &currentSpriteX, float &currentSpriteY, int 
 				currentSpriteHeight = honeycombHeight;
 				currentSpriteCreated = &redHoneycombCreated[i];
 				currentSpriteDestroyed = &redHoneycombDestroyed[i];
+				currentSpriteSucked = &redHoneycombSucked[i];
 				return true;
-			}
-		}
-		for (int i = 0; i < noOfBeeHives; i++) {
-			if (beeHiveCreated[i] && !beeHiveDestroyed[i]) {
-				currentSpriteX = beeHiveCoords[i][0];
-				currentSpriteY = beeHiveCoords[i][1];
-				currentSpriteWidth = beeHiveWidth;
-				currentSpriteHeight = beeHiveHeight;
-				currentSpriteCreated = &beeHiveCreated[i];
-				currentSpriteDestroyed = &beeHiveDestroyed[i];
-				return true;
-			
 			}
 		}
 		// logic here
@@ -620,7 +739,7 @@ void drawHummingBird(RenderWindow &window, Sprite hummingBird, float hummingBird
 
 // this has all the functionality of hummingbird
 // honeycombFound and onHoneycomb are used for both types of honeycombs and bee hives
-void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, int &honeycombsSucked, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, int nectarSuckTime, int groundY) {
+void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingBirdY, int hummingBirdWidth, int hummingBirdHeight, int hummingBirdStepValue, bool &isHummingBirdSick, float bulletX, float &bulletY, int bulletWidth, int bulletHeight, bool bulletExists, int hummingBirdHealingTime, float hummingBirdSpeed, int nectarSuckTime, int groundY) {
 
 	static int hitByBullet = 0;
 	static Clock hummingBirdSickTimer;
@@ -643,6 +762,7 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 	static int spriteHeight;
 	static bool *spriteCreated = nullptr;
 	static bool *spriteDestroyed = nullptr;
+	static bool *spriteSucked = nullptr;
 
 	// if sick, it doesn't do anything else
 	if (isHummingBirdSick) {
@@ -691,7 +811,7 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 
 	// if no honeycombs, look for one
 	if (!spriteFound) {
-		if (findSpriteForHummingBird(spriteX, spriteY, spriteWidth, spriteHeight, spriteCreated, spriteDestroyed)) {
+		if (findSpriteForHummingBird(spriteX, spriteY, spriteWidth, spriteHeight, spriteCreated, spriteDestroyed, spriteSucked)) {
 			spriteFound = true;
 			onSprite = false;
 			hummingBirdMoveTimer.restart();
@@ -704,11 +824,10 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 		// if at honeycomb, checks if time has complete to move on to next one
 		if (onSprite) {
 			if (hummingBirdSuckingTimer.getElapsedTime().asSeconds() > nectarSuckTime){
-				// increase score here
 				hummingBirdMoveTimer.restart();
+				*spriteSucked = true;
 				*spriteDestroyed = true;
 				spriteFound = false;
-				honeycombsSucked++;
 				randomCoordsOnScreen(randomX, randomY, groundY);
 				randomTime = (rand() % 5) + 5; 
 			}
@@ -738,8 +857,7 @@ void manageHummingBird(Sprite &hummingBird, float &hummingBirdX, float &hummingB
 		if (hummingBirdX == randomX && hummingBirdY == randomY) {
 			if (hummingBirdSuckingTimer.getElapsedTime().asSeconds() > randomTime) {
 				randomCoordsOnScreen(randomX, randomY, groundY);
-				randomTime = (rand() % 5) + 5; 
-				cout << randomTime << endl;
+				randomTime = (rand() % 5) + 5;
 			}
 
 		} else {
@@ -842,7 +960,7 @@ void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinate
 	if (isPlayerCollidingWithFlowers) {
 		int pixel;
 		for (pixel = 0; pixel < resolutionX - playerWidth; pixel++) {
-			bool isFreeSpace = isCollidingWithMultipleSprites(pixel, playerY, playerWidth, playerHeight, flowerStartIndex, isFlowerPollinated, falseArr, flowerWidth, flowerHeight, totalFlowers, -1, false);
+			bool isFreeSpace = !isCollidingWithMultipleSprites(pixel, playerY, playerWidth, playerHeight, flowerStartIndex, isFlowerPollinated, falseArr, flowerWidth, flowerHeight, totalFlowers, -1, false);
 			if (isFreeSpace) {
 				int temp = playerX;
 				playerX = pixel;
@@ -850,13 +968,6 @@ void beePollinatesGround(Sprite bees[], bool beesAlive[], bool beesHavePollinate
 				break;
 			}
 
-		}
-
-		// if couldn't move, then there was no space
-		if (!(pixel < resolutionX - playerWidth - 1)) {
-			for (int i = 0; i < totalFlowers; i++) {
-				isFlowerPollinated[i] = false;
-			}
 		}
 	}
 }
@@ -966,7 +1077,6 @@ void moveBees(Sprite bees[], int noOfBees, float beesCoords[][2], bool areBeesMo
 					}
 				} else {
 					if (!(rand() % 50)) {
-						cout << "damn";
 						IsWaiting[i] = true;
 						waitTime[i] = (rand() % 3) + 2;
 						waitingTimer[i].restart();
